@@ -4,7 +4,7 @@ import * as flashcardService from '../services/flashcardService';
 export default {
   getAllFlashcards: async (req: Request, res: Response) => {
     try {
-      const flashcards = await flashcardService.getAllFlashcards(req.body);
+      const flashcards = await flashcardService.getAllFlashcards();
       res.json(flashcards);
     } catch (error) {
       res.status(500).json({ error: 'Internal server error' });
@@ -23,7 +23,7 @@ export default {
   updateFlashcardbyId: async (req: Request, res: Response) => {
     try {
       const { id } = req.params; // Assuming you have an 'id' parameter in the URL
-      const updatedFlashcard = await flashcardService.updateFlashcardbyId(id);
+      const updatedFlashcard = await flashcardService.updateFlashcardbyId(id, req.body);
       if (!updatedFlashcard) {
         return res.status(404).json({ error: 'Flashcard not found' });
       }
