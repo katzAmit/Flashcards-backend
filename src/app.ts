@@ -6,6 +6,11 @@ const app = express();
 
 const db = DatabaseSingleton.getInstance();
 
+// middleware
+// login, register 
+
+
+
 // Mount your flashcard routes
 app.use('/', flashcardRoutes);
 
