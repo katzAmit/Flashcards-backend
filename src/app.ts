@@ -1,25 +1,22 @@
-// app.ts
 import express from 'express';
 import flashcardRoutes from './routes/flashcardRoutes';
-import { authenticateToken } from './middleware/middleware'
 import DatabaseSingleton from './db/DatabaseSingleton';
+import authenticateToken from './middleware/middleware'
+import flashController from './controllers/flashcardController'
+require('dotenv').config();
 
 const app = express();
-
+app.use(express.json());
 const db = DatabaseSingleton.getInstance();
 
-// Middleware for login and register routes (to be implemented)
-// For example:
-// app.use('/login', loginMiddleware);
-// app.use('/register', registerMiddleware);
+app.post('/login', flashController.loginPage);
+app.post('/register', flashController.registerUser);
 
-// Protect routes with authentication middleware
 app.use(authenticateToken);
 
-// Mount your flashcard routes
 app.use('/', flashcardRoutes);
 
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

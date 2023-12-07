@@ -24,7 +24,9 @@ class DatabaseSingleton {
   private static initializeTables() {
     DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS User (
       Username TEXT PRIMARY KEY,
-      Password TEXT
+      Password TEXT,
+      fName TEXT,
+      lName TEXT
     )`);
 
     DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS Category (

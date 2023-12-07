@@ -11,6 +11,8 @@ export type Flashcard = {
 export type User = {
   Username: string;
   Password: string; // Encrypted at rest
+  fName: string;
+  lName: string;
 }
 
 export type Category = {
