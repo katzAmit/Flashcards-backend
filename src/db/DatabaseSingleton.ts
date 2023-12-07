@@ -1,8 +1,6 @@
 import sqlite3 from 'sqlite3';
+
 class DatabaseSingleton {
-  // static getUsers(): {
-  //   return []
-  // }
   private static instance: sqlite3.Database | null = null;
 
   private constructor() { } // Prevents external instantiation
@@ -20,40 +18,55 @@ class DatabaseSingleton {
     } else {
       // If the instance already exists, perform operations here if needed
     }
-    return DatabaseSingleton.instance;
+    return DatabaseSingleton.instance as sqlite3.Database;
   }
 
   private static initializeTables() {
-    DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS flashcards (
-            id INTEGER PRIMARY KEY,
-            question TEXT,
-            answer TEXT
-        )`, (initErr) => {
+    DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS User (
+      Username TEXT PRIMARY KEY,
+      Password TEXT
+    )`);
+
+    DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS Category (
+      Description TEXT PRIMARY KEY
+    )`);
+
+    DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS Flashcard (
+      id TEXT PRIMARY KEY,
+      UserID TEXT,
+      Question TEXT,
+      Answer TEXT,
+      CategoryDescription TEXT,
+      DifficultyLevel TEXT,
+      FOREIGN KEY (UserID) REFERENCES User(Username),
+      FOREIGN KEY (CategoryDescription) REFERENCES Category(Description)
+    )`, (initErr) => {
       if (initErr) {
         console.error('Error initializing flashcards table:', initErr.message);
       } else {
         console.log('Flashcards table initialized.');
-        DatabaseSingleton.insertSingleFlashcard(); // Call method to insert a single flashcard
       }
     });
   }
 
-  private static insertSingleFlashcard() {
-    // Insert a single flashcard into the flashcards table
-    const question = 'What is the capital of Israel?';
-    const answer = 'Jerusalem';
-
-    DatabaseSingleton.instance?.run(
-      'INSERT INTO flashcards (question, answer) VALUES (?, ?)',
-      [question, answer],
-      (insertErr) => {
-        if (insertErr) {
-          console.error('Error inserting a flashcard:', insertErr.message);
+  static insertFlashcard(
+    id: string,
+    UserID: string,
+    Question: string,
+    Answer: string,
+    CategoryDescription: string,
+    DifficultyLevel: string
+  ) {
+    DatabaseSingleton.instance?.run(`INSERT INTO Flashcard (id, UserID, Question, Answer, CategoryDescription, DifficultyLevel)
+      VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, UserID, Question, Answer, CategoryDescription, DifficultyLevel],
+      (err) => {
+        if (err) {
+          console.error('Error inserting flashcard:', err.message);
         } else {
-          console.log('Single flashcard inserted into flashcards table.');
+          console.log('Flashcard inserted successfully.');
         }
-      }
-    );
+      });
   }
 }
 
