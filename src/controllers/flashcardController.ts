@@ -79,15 +79,17 @@ export default {
   },
   registerUser: async (req: Request, res: Response) => {
     const { username, password, fName, lName } = req.body;
-    // Replace this with your actual logic to create a user entry in the Users table
-    const isRegistered = await flashcardService.registerUser(username, password, fName, lName);
-    if (!isRegistered) {
-      res.status(500).json({ error: 'Error creating user.' });
-    } else {
-      res.status(201).json({ message: 'User created successfully.' });
+    const userExists: boolean = await flashcardService.userExists(username);
+    if (!userExists) {
+      const isRegistered = await flashcardService.registerUser(username, password, fName, lName);
+      if (!isRegistered) {
+        res.status(500).json({ error: 'Error creating user.' });
+      } else {
+        res.status(201).json({ message: 'User created successfully.' });
+      }
     }
-
+    else {
+      res.status(400).json({ error: 'User already exists' })
+    }
   },
-
-
 };

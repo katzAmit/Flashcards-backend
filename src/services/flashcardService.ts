@@ -95,5 +95,22 @@ export const getUserFirstName = async (username: string): Promise<string | null>
     });
   });
 };
+export const userExists = async (username: string): Promise<boolean> => {
+  const userQuery = 'SELECT Username FROM User WHERE Username = ?';
+  return new Promise<boolean>((resolve, reject) => {
+    db.get(userQuery, [username], (err, row: { Username?: string }) => {
+      if (err) {
+        reject(err);
+      } else {
+        if (row && row.Username) {
+          resolve(true); // User exists
+        } else {
+          resolve(false); // User doesn't exist
+        }
+      }
+    });
+  });
+};
+
 
 

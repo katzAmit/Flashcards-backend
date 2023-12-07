@@ -3,10 +3,13 @@ import flashcardRoutes from './routes/flashcardRoutes';
 import DatabaseSingleton from './db/DatabaseSingleton';
 import authenticateToken from './middleware/middleware'
 import flashController from './controllers/flashcardController'
+const cors = require('cors');
+
 require('dotenv').config();
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 const db = DatabaseSingleton.getInstance();
 
 app.post('/login', flashController.loginPage);
