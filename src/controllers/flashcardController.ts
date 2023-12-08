@@ -74,7 +74,7 @@ export default {
       const token = jwt.sign(tokenPayload, 'secret_key'); // Replace 'secret_key' with your actual secret key
       res.status(200).json({ token });
     } else {
-      res.status(403).json({ error: 'Invalid credentials.' });
+      res.status(403).json({ error: 'That email and password combination is incorrect' });
     }
   },
   registerUser: async (req: Request, res: Response) => {
@@ -83,7 +83,7 @@ export default {
     if (!userExists) {
       const isRegistered = await flashcardService.registerUser(username, password, fName, lName);
       if (!isRegistered) {
-        res.status(500).json({ error: 'Error creating user.' });
+        res.status(500).json({ error: 'Error when signing up, please try again' });
       } else {
         res.status(201).json({ message: 'User created successfully.' });
       }
