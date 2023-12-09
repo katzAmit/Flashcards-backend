@@ -4,6 +4,7 @@
   "description": "flashcards backend repo",
   "main": "index.js",
   "scripts": {
+    "start": "nodemon --exec ts-node ./src/app.ts",
     "debug": "nodemon --ext ts --exec ts-node ./src/app.ts"
   },
   "author": "",
