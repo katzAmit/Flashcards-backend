@@ -27,7 +27,7 @@ export const updateFlashcardbyId = async (id: string, body: Partial<Flashcard>):
   // ... (unchanged)
 };
 
-export const getAllFlashcards = async (): Promise<Flashcard[]> => {
+export const getAllFlashcards = async (email: string): Promise<Flashcard[]> => {
   return new Promise<Flashcard[]>((resolve, reject) => {
     db.all('SELECT * FROM flashcards', (err, rows: Flashcard[]) => {
       if (err) {

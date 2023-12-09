@@ -4,10 +4,15 @@ import { Flashcard } from '../types/flashcardInterfaces';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { User } from '../types/flashcardInterfaces'
+import { RequestWithUserPayload } from '../types/request.interface';
 export default {
-  getAllFlashcards: async (req: Request, res: Response) => {
+  getAllFlashcards: async (req: RequestWithUserPayload, res: Response) => {
     try {
-      const flashcards = await flashcardService.getAllFlashcards();
+      if (!req.user) {
+        return res.status(500).json({ error: 'Internal server error, user not found' });
+      }
+
+      const flashcards = await flashcardService.getAllFlashcards(req.user?.username);
       res.json(flashcards);
     } catch (error) {
       res.status(500).json({ error: 'Internal  server error' });
