@@ -23,11 +23,11 @@ export default {
       res.status(500).json({ error: 'Internal server error' });
     }
   },
-  deleteFlashcard: async (req: Request, res: Response) => {
+  deleteFlashcard: async (req: RequestWithUserPayload, res: Response) => {
     try {
-      const { id } = req.params;
-      await deleteFlashcardById(id);
-      res.json({ message: `Flashcard with ID ${id} deleted successfully` });
+      const { cardId } = req.params;
+      await deleteFlashcardById(cardId);
+      res.json({ message: `Flashcard with ID ${cardId} deleted successfully` });
     } catch (error) {
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -50,13 +50,12 @@ export default {
       res.status(400).json({ error: 'Invalid data' });
     }
   },
-
   updateFlashcard: async (req: RequestWithUserPayload, res: Response) => {
     try {
-      const { id } = req.params;
+      const { cardId } = req.params;
       const updatedFields: Partial<Flashcard> = req.body;
-      await updateFlashcardbyId(id, updatedFields);
-      const updatedFlashcard = await getFlashcardbyId(id);
+      await updateFlashcardbyId(cardId, updatedFields);
+      const updatedFlashcard = await getFlashcardbyId(cardId);
       if (!updatedFlashcard) {
         return res.status(404).json({ error: 'Flashcard not found' });
       }
@@ -65,7 +64,6 @@ export default {
       res.status(500).json({ error: 'Internal server error' });
     }
   },
-
   getFlashcard: async (req: RequestWithUserPayload, res: Response) => {
     try {
       const { cardId } = req.params;
@@ -78,7 +76,6 @@ export default {
       res.status(500).json({ error: 'Internal server error' });
     }
   },
-
   loginPage: async (req: Request, res: Response) => {
     const { username, password } = req.body;
 
