@@ -4,12 +4,12 @@ import { Flashcard } from '../types/flashcardInterfaces';
 import { User } from '../types/flashcardInterfaces'
 const db: Database = DatabaseSingleton.getInstance();
 
-export const createFlashcard = async (body: Flashcard): Promise<void> => {
-  const { UserID, Question, Answer, Category, DifficultyLevel } = body;
+export const createFlashcard = async (flashcard: Flashcard): Promise<void> => {
+  const { id: id, username: username, question: question, answer: answer, category: category, difficulty_level: difficulty_level } = flashcard;
   return new Promise<void>((resolve, reject) => {
     db.run(
-      'INSERT INTO flashcards (UserID, Question, Answer, Category, DifficultyLevel) VALUES (?, ?, ?, ?, ?)',
-      [UserID, Question, Answer, Category, DifficultyLevel],
+      'INSERT INTO flashcards (id, username, question, answer, category, difficulty_level) VALUES (?, ?, ?, ?, ?)',
+      [id, username, question, answer, category, difficulty_level],
       function (err) {
         if (err) {
           console.error(err);
@@ -24,12 +24,59 @@ export const createFlashcard = async (body: Flashcard): Promise<void> => {
 };
 
 export const updateFlashcardbyId = async (id: string, body: Partial<Flashcard>): Promise<void> => {
-  // ... (unchanged)
+  const { username, question, answer, category, difficulty_level } = body;
+  return new Promise<void>((resolve, reject) => {
+    db.run(
+      'UPDATE flashcards SET username = ?, question = ?, answer = ?, category = ?, difficulty_level = ? WHERE id = ?',
+      [username, question, answer, category, difficulty_level, id],
+      function (err) {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          console.log(`Flashcard updated with ID: ${id}`);
+          resolve();
+        }
+      }
+    );
+  });
 };
 
-export const getAllFlashcards = async (email: string): Promise<Flashcard[]> => {
+
+export const deleteFlashcardById = async (id: string): Promise<void> => {
+  return new Promise<void>((resolve, reject) => {
+    db.run(
+      'DELETE FROM flashcards WHERE id = ?',
+      [id],
+      function (err) {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          console.log(`Flashcard deleted with ID: ${id}`);
+          resolve();
+        }
+      }
+    );
+  });
+};
+
+export const getFlashcards = async (username: string, category?: string, difficulty_level?: string): Promise<Flashcard[]> => {
   return new Promise<Flashcard[]>((resolve, reject) => {
-    db.all('SELECT * FROM flashcards', (err, rows: Flashcard[]) => {
+    let query = 'SELECT * FROM flashcards WHERE username = ?';
+    const queryParams = [username];
+
+    if (category) {
+      query += ' AND category = ?';
+      queryParams.push(category);
+    }
+
+    if (difficulty_level) {
+      query += ' AND difficulty_level = ?';
+      queryParams.push(difficulty_level);
+    }
+
+    db.all(query, queryParams, (err, rows: Flashcard[]) => {
       if (err) {
         console.error(err);
         reject(err);
@@ -54,8 +101,7 @@ export const getFlashcardbyId = async (id: string): Promise<Flashcard | null> =>
 };
 
 export const validateUser = async (username: string, password: string): Promise<User> => {
-  const userQuery = 'SELECT * FROM User WHERE Username = ? AND Password = ?';
-
+  const userQuery = 'SELECT * FROM user WHERE username = ? AND password = ?';
   return new Promise<User>((resolve, reject) => {
     db.get(userQuery, [username, password], (err, row: User) => {
       if (err) {
@@ -67,9 +113,9 @@ export const validateUser = async (username: string, password: string): Promise<
   });
 };
 
-export const registerUser = async (username: string, password: string, fName: string, lName: string): Promise<boolean> => {
+export const registerUser = async (username: string, password: string, fname: string, lname: string): Promise<boolean> => {
   return new Promise<boolean>((resolve, reject) => {
-    db.run(`INSERT INTO User (Username, Password, fName, lName) VALUES (?, ?, ?, ?)`, [username, password, fName, lName], (err) => {
+    db.run(`INSERT INTO User (username, password, fname, lname) VALUES (?, ?, ?, ?)`, [username, password, fname, lname], (err) => {
       if (err) {
         reject(err);
       } else {
@@ -80,14 +126,14 @@ export const registerUser = async (username: string, password: string, fName: st
 };
 
 export const getUserFirstName = async (username: string): Promise<string | null> => {
-  const userQuery = 'SELECT fName FROM User WHERE Username = ?';
+  const userQuery = 'SELECT fname FROM user WHERE username = ?';
   return new Promise<string | null>((resolve, reject) => {
-    db.get(userQuery, [username], (err, row: { fName?: string }) => {
+    db.get(userQuery, [username], (err, row: { fname?: string }) => {
       if (err) {
         reject(err);
       } else {
-        if (row && row.fName) {
-          resolve(row.fName); // Extract fName from the row and resolve with it
+        if (row && row.fname) {
+          resolve(row.fname); // Extract fName from the row and resolve with it
         } else {
           resolve(null); // Resolve with null if no user found or fName is undefined
         }
@@ -96,13 +142,13 @@ export const getUserFirstName = async (username: string): Promise<string | null>
   });
 };
 export const userExists = async (username: string): Promise<boolean> => {
-  const userQuery = 'SELECT Username FROM User WHERE Username = ?';
+  const userQuery = 'SELECT username FROM user WHERE username = ?';
   return new Promise<boolean>((resolve, reject) => {
-    db.get(userQuery, [username], (err, row: { Username?: string }) => {
+    db.get(userQuery, [username], (err, row: { username?: string }) => {
       if (err) {
         reject(err);
       } else {
-        if (row && row.Username) {
+        if (row && row.username) {
           resolve(true); // User exists
         } else {
           resolve(false); // User doesn't exist

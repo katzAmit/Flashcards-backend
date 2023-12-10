@@ -11,7 +11,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 const db = DatabaseSingleton.getInstance();
-
+DatabaseSingleton.initializeDatabase()
 app.post('/login', flashController.loginPage);
 app.post('/register', flashController.registerUser);
 

@@ -5,45 +5,58 @@ import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { User } from '../types/flashcardInterfaces'
 import { RequestWithUserPayload } from '../types/request.interface';
+import { createFlashcard, deleteFlashcardById, getFlashcardbyId, getFlashcards, updateFlashcardbyId } from '../services/flashcardService';
 export default {
-  getAllFlashcards: async (req: RequestWithUserPayload, res: Response) => {
+  getFlashcards: async (req: RequestWithUserPayload, res: Response) => {
     try {
-      if (!req.user) {
+      const category = req.query.category as string | undefined;
+      const difficulty_level = req.query.difficulty_level as string | undefined;
+      const username = req.user?.username;
+
+      if (!username) {
         return res.status(500).json({ error: 'Internal server error, user not found' });
       }
 
-      const flashcards = await flashcardService.getAllFlashcards(req.user?.username);
+      const flashcards: Flashcard[] = await getFlashcards(username, category, difficulty_level);
       res.json(flashcards);
     } catch (error) {
-      res.status(500).json({ error: 'Internal  server error' });
+      res.status(500).json({ error: 'Internal server error' });
     }
   },
-
-  createFlashcard: async (req: Request, res: Response) => {
+  deleteFlashcard: async (req: Request, res: Response) => {
     try {
-      const { UserID, Question, Answer, Category, DifficultyLevel } = req.body as Flashcard;
-      const FlashcardID: string = uuidv4()
+      const { id } = req.params;
+      await deleteFlashcardById(id);
+      res.json({ message: `Flashcard with ID ${id} deleted successfully` });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+  createFlashcard: async (req: RequestWithUserPayload, res: Response) => {
+    try {
+      const id = uuidv4()
+      const { username: username, question: question, answer: answer, category: category, difficulty_level: difficulty_level } = req.body as Flashcard;
       const newFlashcard: Flashcard = {
-        FlashcardID,
-        UserID,
-        Question,
-        Answer,
-        Category,
-        DifficultyLevel,
+        id: id,
+        username: username,
+        question: question,
+        answer: answer,
+        category: category,
+        difficulty_level: difficulty_level,
       };
-      await flashcardService.createFlashcard(newFlashcard);
+      await createFlashcard(newFlashcard);
       res.status(201).json(newFlashcard);
     } catch (error) {
       res.status(400).json({ error: 'Invalid data' });
     }
   },
 
-  updateFlashcardbyId: async (req: Request, res: Response) => {
+  updateFlashcard: async (req: RequestWithUserPayload, res: Response) => {
     try {
       const { id } = req.params;
       const updatedFields: Partial<Flashcard> = req.body;
-      await flashcardService.updateFlashcardbyId(id, updatedFields);
-      const updatedFlashcard = await flashcardService.getFlashcardbyId(id);
+      await updateFlashcardbyId(id, updatedFields);
+      const updatedFlashcard = await getFlashcardbyId(id);
       if (!updatedFlashcard) {
         return res.status(404).json({ error: 'Flashcard not found' });
       }
@@ -53,10 +66,10 @@ export default {
     }
   },
 
-  getFlashcardbyId: async (req: Request, res: Response) => {
+  getFlashcard: async (req: RequestWithUserPayload, res: Response) => {
     try {
-      const { id } = req.params;
-      const flashcard = await flashcardService.getFlashcardbyId(id);
+      const { cardId } = req.params;
+      const flashcard = await getFlashcardbyId(cardId);
       if (!flashcard) {
         return res.status(404).json({ error: 'Flashcard not found' });
       }
@@ -65,6 +78,7 @@ export default {
       res.status(500).json({ error: 'Internal server error' });
     }
   },
+
   loginPage: async (req: Request, res: Response) => {
     const { username, password } = req.body;
 
@@ -73,20 +87,19 @@ export default {
     if (isValidUser) {
       const tokenPayload = {
         username: username,
-        fName: isValidUser.fName,
-        // Add other properties as needed
+        fname: isValidUser.fname,
       };
       const token = jwt.sign(tokenPayload, 'secret_key'); // Replace 'secret_key' with your actual secret key
       res.status(200).json({ token });
     } else {
-      res.status(403).json({ error: 'That email and password combination is incorrect' });
+      res.status(403).json({ error: 'Invalid credentials' });
     }
   },
   registerUser: async (req: Request, res: Response) => {
-    const { username, password, fName, lName } = req.body;
+    const { username, password, fname, lname } = req.body;
     const userExists: boolean = await flashcardService.userExists(username);
     if (!userExists) {
-      const isRegistered = await flashcardService.registerUser(username, password, fName, lName);
+      const isRegistered = await flashcardService.registerUser(username, password, fname, lname);
       if (!isRegistered) {
         res.status(500).json({ error: 'Error when signing up, please try again' });
       } else {

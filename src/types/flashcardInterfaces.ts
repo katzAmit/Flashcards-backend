@@ -6,21 +6,21 @@ export enum DifficultyLevel {
 }
 
 export type Flashcard = {
-  FlashcardID: string;
-  UserID: string;
-  Question: string;
-  Answer: string;
-  Category: string;
-  DifficultyLevel: DifficultyLevel; // Using the ENUM here
+  id: string;
+  username: string;
+  question: string;
+  answer: string;
+  category: string;
+  difficulty_level: DifficultyLevel; // Using the ENUM here
 }
 
 export type User = {
-  Username: string;
-  Password: string; // Encrypted at rest
-  fName: string;
-  lName: string;
+  username: string;
+  password: string; // Encrypted at rest
+  fname: string;
+  lname: string;
 }
 
 export type Category = {
-  Description: string;
+  category: string;
 }
