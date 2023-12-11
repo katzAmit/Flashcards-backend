@@ -1,8 +1,8 @@
 // flashcardInterfaces.ts
-export enum DifficultyLevel {
-  Easy = '1',
-  Medium = '2',
-  Hard = '3'
+export enum difficulty_level {
+  Easy = 'Easy',
+  Medium = 'Medium',
+  Hard = 'Hard'
 }
 
 export type Flashcard = {
@@ -11,7 +11,7 @@ export type Flashcard = {
   question: string;
   answer: string;
   category: string;
-  difficulty_level: DifficultyLevel; // Using the ENUM here
+  difficulty_level: difficulty_level; // Using the ENUM here
 }
 
 export type User = {
@@ -23,4 +23,10 @@ export type User = {
 
 export type Category = {
   category: string;
+}
+export type Quiz = {
+  id: string,
+  flashcards: Flashcard[],
+  start_time: Date,
+  end_time: Date
 }

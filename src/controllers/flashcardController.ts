@@ -5,8 +5,9 @@ import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { User } from '../types/flashcardInterfaces'
 import { RequestWithUserPayload } from '../types/request.interface';
-import { createFlashcard, deleteFlashcardById, getFlashcardbyId, getFlashcards, updateFlashcardbyId } from '../services/flashcardService';
+import { generateQuizzes, createFlashcard, deleteFlashcardById, getFlashcardbyId, getFlashcards, updateFlashcardbyId } from '../services/flashcardService';
 export default {
+  // flashcards
   getFlashcards: async (req: RequestWithUserPayload, res: Response) => {
     try {
       const category = req.query.category as string | undefined;
@@ -23,6 +24,18 @@ export default {
       res.status(500).json({ error: 'Internal server error' });
     }
   },
+  getFlashcard: async (req: RequestWithUserPayload, res: Response) => {
+    try {
+      const { cardId } = req.params;
+      const flashcard = await getFlashcardbyId(cardId);
+      if (!flashcard) {
+        return res.status(404).json({ error: 'Flashcard not found' });
+      }
+      res.json(flashcard);
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
   deleteFlashcard: async (req: RequestWithUserPayload, res: Response) => {
     try {
       const { cardId } = req.params;
@@ -34,18 +47,21 @@ export default {
   },
   createFlashcard: async (req: RequestWithUserPayload, res: Response) => {
     try {
-      const id = uuidv4()
-      const { username: username, question: question, answer: answer, category: category, difficulty_level: difficulty_level } = req.body as Flashcard;
-      const newFlashcard: Flashcard = {
-        id: id,
-        username: username,
-        question: question,
-        answer: answer,
-        category: category,
-        difficulty_level: difficulty_level,
-      };
-      await createFlashcard(newFlashcard);
-      res.status(201).json(newFlashcard);
+      if (req.user) {
+        const id = uuidv4()
+        const username = req.user.username
+        const { question: question, answer: answer, category: category, difficulty_level: difficulty_level } = req.body;
+        const newFlashcard: Flashcard = {
+          id: id,
+          username: username,
+          question: question,
+          answer: answer,
+          category: category,
+          difficulty_level: difficulty_level,
+        };
+        await createFlashcard(newFlashcard);
+        res.status(201).json(newFlashcard);
+      }
     } catch (error) {
       res.status(400).json({ error: 'Invalid data' });
     }
@@ -64,18 +80,33 @@ export default {
       res.status(500).json({ error: 'Internal server error' });
     }
   },
-  getFlashcard: async (req: RequestWithUserPayload, res: Response) => {
+  generateQuizzesController: async (req: RequestWithUserPayload, res: Response): Promise<void> => {
+    // try {
+    //   const quizes: Quiz[] = await generateQuizzes();
+    //   res.status(200).json({ message: 'Quizzes generated successfully.' });
+    // } catch (error) {
+    //   console.error(error);
+    //   res.status(500).json({ error: 'Failed to generate quizzes.' });
+    // }
+  },
+  // quizzes
+  getQuizzes: async (req: RequestWithUserPayload, res: Response) => {
     try {
       const { cardId } = req.params;
-      const flashcard = await getFlashcardbyId(cardId);
-      if (!flashcard) {
+      const updatedFields: Partial<Flashcard> = req.body;
+      await updateFlashcardbyId(cardId, updatedFields);
+      const updatedFlashcard = await getFlashcardbyId(cardId);
+      if (!updatedFlashcard) {
         return res.status(404).json({ error: 'Flashcard not found' });
       }
-      res.json(flashcard);
+      res.json(updatedFlashcard);
     } catch (error) {
       res.status(500).json({ error: 'Internal server error' });
     }
   },
+
+
+  // login
   loginPage: async (req: Request, res: Response) => {
     const { username, password } = req.body;
 

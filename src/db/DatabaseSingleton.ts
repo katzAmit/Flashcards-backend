@@ -22,13 +22,27 @@ class DatabaseSingleton {
   }
 
   private static initializeTables() {
+
     DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS user (
       username TEXT PRIMARY KEY,
       password TEXT,
       fname TEXT,
       lname TEXT
     )`);
-
+    DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS quizzes (
+      quiz_id INTEGER,
+      flashcard_id INTEGER,
+      start_date DATE,
+      end_date DATE,
+      PRIMARY KEY (quiz_id, flashcard_id),
+      FOREIGN KEY (flashcard_id) REFERENCES flashcards(id)
+    )`, (initErr) => {
+      if (initErr) {
+        console.error('Error initializing quizzes table:', initErr.message);
+      } else {
+        console.log('Quizzes table initialized.');
+      }
+    });
     DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS category (
       category TEXT PRIMARY KEY
     )`);

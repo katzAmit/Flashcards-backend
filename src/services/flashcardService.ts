@@ -2,13 +2,16 @@ import { Database } from 'sqlite3';
 import DatabaseSingleton from '../db/DatabaseSingleton';
 import { Flashcard } from '../types/flashcardInterfaces';
 import { User } from '../types/flashcardInterfaces'
+import { Quiz } from '../types/flashcardInterfaces'
+import { resolve } from 'path';
+import { rejects } from 'assert';
 const db: Database = DatabaseSingleton.getInstance();
 
 export const createFlashcard = async (flashcard: Flashcard): Promise<void> => {
   const { id: id, username: username, question: question, answer: answer, category: category, difficulty_level: difficulty_level } = flashcard;
   return new Promise<void>((resolve, reject) => {
     db.run(
-      'INSERT INTO flashcards (id, username, question, answer, category, difficulty_level) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO flashcards (id, username, question, answer, category, difficulty_level) VALUES (?, ?, ?, ?, ?, ?)',
       [id, username, question, answer, category, difficulty_level],
       function (err) {
         if (err) {
@@ -22,7 +25,6 @@ export const createFlashcard = async (flashcard: Flashcard): Promise<void> => {
     );
   });
 };
-
 export const updateFlashcardbyId = async (id: string, body: Partial<Flashcard>): Promise<void> => {
   const { username, question, answer, category, difficulty_level } = body;
   return new Promise<void>((resolve, reject) => {
@@ -41,8 +43,6 @@ export const updateFlashcardbyId = async (id: string, body: Partial<Flashcard>):
     );
   });
 };
-
-
 export const deleteFlashcardById = async (id: string): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
     db.run(
@@ -60,7 +60,6 @@ export const deleteFlashcardById = async (id: string): Promise<void> => {
     );
   });
 };
-
 export const getFlashcards = async (username: string, category?: string, difficulty_level?: string): Promise<Flashcard[]> => {
   return new Promise<Flashcard[]>((resolve, reject) => {
     let query = 'SELECT * FROM flashcards WHERE username = ?';
@@ -86,7 +85,6 @@ export const getFlashcards = async (username: string, category?: string, difficu
     });
   });
 };
-
 export const getFlashcardbyId = async (id: string): Promise<Flashcard | null> => {
   return new Promise<Flashcard | null>((resolve, reject) => {
     db.get('SELECT * FROM flashcards WHERE id = ?', [id], (err, row: Flashcard) => {
@@ -99,7 +97,14 @@ export const getFlashcardbyId = async (id: string): Promise<Flashcard | null> =>
     });
   });
 };
+// quizzes
+export const generateQuizzes = async (): Promise<Quiz[]> => {
+  return new Promise<Quiz[]>((resolve, reject) => {
 
+  })
+};
+
+// login
 export const validateUser = async (username: string, password: string): Promise<User> => {
   const userQuery = 'SELECT * FROM user WHERE username = ? AND password = ?';
   return new Promise<User>((resolve, reject) => {
