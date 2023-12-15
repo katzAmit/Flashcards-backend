@@ -1,6 +1,6 @@
 import { Database } from "sqlite3";
 import DatabaseSingleton from "../db/DatabaseSingleton";
-import { Flashcard } from "../types/flashcardInterfaces";
+import { Category, Flashcard } from "../types/flashcardInterfaces";
 import { User } from "../types/flashcardInterfaces";
 import { Quiz } from "../types/flashcardInterfaces";
 import { resolve } from "path";
@@ -115,7 +115,7 @@ export const getFlashcardbyId = async (
 };
 // quizzes
 export const generateQuizzes = async (): Promise<Quiz[]> => {
-  return new Promise<Quiz[]>((resolve, reject) => {});
+  return new Promise<Quiz[]>((resolve, reject) => { });
 };
 
 // login
@@ -190,3 +190,20 @@ export const userExists = async (username: string): Promise<boolean> => {
     });
   });
 };
+export const getCategories = async (username: string): Promise<Category[]> => {
+  const categoriesQuery = "SELECT category FROM category WHERE username = ?";
+  return new Promise<Category[]>((resolve, reject) => {
+    db.all(categoriesQuery, [username], (err, rows: { category: string }[]) => {
+      if (err) {
+        reject(err);
+      } else {
+        const categories: Category[] = rows.map((row) => ({
+          category: row.category,
+          username: username,
+        }));
+        resolve(categories);
+      }
+    });
+  });
+};
+

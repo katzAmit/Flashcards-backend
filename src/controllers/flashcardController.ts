@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
 import * as flashcardService from '../services/flashcardService';
-import { Flashcard } from '../types/flashcardInterfaces';
+import { Category, Flashcard } from '../types/flashcardInterfaces';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { User } from '../types/flashcardInterfaces'
 import { RequestWithUserPayload } from '../types/request.interface';
-import { generateQuizzes, createFlashcard, deleteFlashcardById, getFlashcardbyId, getFlashcards, updateFlashcardbyId } from '../services/flashcardService';
+import { getCategories, generateQuizzes, createFlashcard, deleteFlashcardById, getFlashcardbyId, getFlashcards, updateFlashcardbyId } from '../services/flashcardService';
 export default {
   // flashcards
   getFlashcards: async (req: RequestWithUserPayload, res: Response) => {
@@ -80,7 +80,22 @@ export default {
       res.status(500).json({ error: 'Internal server error' });
     }
   },
-  generateQuizzesController: async (req: RequestWithUserPayload, res: Response): Promise<void> => {
+  getCategories: async (req: RequestWithUserPayload, res: Response) => {
+    try {
+      const username = req.user?.username;
+      if (username) {
+        const categories: Category[] = await getCategories(username);
+        if (!categories) {
+          return res.status(404).json({ error: 'Flashcard not found' });
+        }
+        res.json(categories)
+      }
+    }
+    catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+  generateQuizzes: async (req: RequestWithUserPayload, res: Response): Promise<void> => {
     // try {
     //   const quizes: Quiz[] = await generateQuizzes();
     //   res.status(200).json({ message: 'Quizzes generated successfully.' });
@@ -104,7 +119,6 @@ export default {
       res.status(500).json({ error: 'Internal server error' });
     }
   },
-
 
   // login
   loginPage: async (req: Request, res: Response) => {
@@ -138,4 +152,7 @@ export default {
       res.status(400).json({ error: 'User already exists' })
     }
   },
+  getCategory: async (req: Request, res: Response) => {
+
+  }
 };

@@ -14,4 +14,6 @@ router.post('/flashcards', cardsController.createFlashcard);
 router.put('/flashcards/:cardId', cardsController.updateFlashcard);
 
 router.get('/quizzes', cardsController.getQuizzes)
+
+router.get('/categories', cardsController.getCategories)
 export default router;

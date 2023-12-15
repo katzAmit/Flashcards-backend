@@ -23,6 +23,7 @@ export type User = {
 
 export type Category = {
   category: string;
+  username: string;
 }
 export type Quiz = {
   id: string,

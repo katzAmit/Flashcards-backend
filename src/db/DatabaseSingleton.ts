@@ -44,8 +44,11 @@ class DatabaseSingleton {
       }
     });
     DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS category (
-      category TEXT PRIMARY KEY
+      category TEXT,
+      username TEXT,
+      PRIMARY KEY (category, username)
     )`);
+
 
     DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS flashcards (
       id TEXT PRIMARY KEY,
