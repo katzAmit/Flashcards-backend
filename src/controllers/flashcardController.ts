@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { User } from '../types/flashcardInterfaces'
 import { RequestWithUserPayload } from '../types/request.interface';
-import { getCategories, generateQuizzes, createFlashcard, deleteFlashcardById, getFlashcardbyId, getFlashcards, updateFlashcardbyId } from '../services/flashcardService';
+import { getCategories, generateQuizzes, createFlashcard, deleteFlashcardById, getFlashcardbyId, getFlashcards, updateFlashcardbyId, checkCategoryExists, addCategory } from '../services/flashcardService';
 export default {
   // flashcards
   getFlashcards: async (req: RequestWithUserPayload, res: Response) => {
@@ -59,6 +59,10 @@ export default {
           category: category,
           difficulty_level: difficulty_level,
         };
+        const category_exist: boolean = await checkCategoryExists(username, category)
+        if (!category_exist) {
+          await addCategory(username, category)
+        }
         await createFlashcard(newFlashcard);
         res.status(201).json(newFlashcard);
       }
@@ -68,14 +72,24 @@ export default {
   },
   updateFlashcard: async (req: RequestWithUserPayload, res: Response) => {
     try {
-      const { cardId } = req.params;
-      const updatedFields: Partial<Flashcard> = req.body;
-      await updateFlashcardbyId(cardId, updatedFields);
-      const updatedFlashcard = await getFlashcardbyId(cardId);
-      if (!updatedFlashcard) {
-        return res.status(404).json({ error: 'Flashcard not found' });
+      if (req.user) {
+        const username = req.user?.username
+        const { cardId } = req.params;
+        const updatedFields: Partial<Flashcard> = req.body;
+        const category = updatedFields?.category
+        if (category) {
+          const category_exist: boolean = await checkCategoryExists(username, category)
+          if (!category_exist) {
+            await addCategory(username, category)
+          }
+          await updateFlashcardbyId(cardId, updatedFields);
+          const updatedFlashcard = await getFlashcardbyId(cardId);
+          if (!updatedFlashcard) {
+            return res.status(404).json({ error: 'Flashcard not found' });
+          }
+          res.json(updatedFlashcard);
+        }
       }
-      res.json(updatedFlashcard);
     } catch (error) {
       res.status(500).json({ error: 'Internal server error' });
     }

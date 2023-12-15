@@ -206,4 +206,28 @@ export const getCategories = async (username: string): Promise<Category[]> => {
     });
   });
 };
+//categories
+export const checkCategoryExists = (username: string, category: string): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      "SELECT 1 FROM categories WHERE username = ? AND category = ? LIMIT 1",
+      [username, category],
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(!!result);
+        }
+      }
+    );
+  });
+};
+
+export const addCategory = async (username: string, category: string): Promise<void> => {
+  await db.run(
+    "INSERT INTO categories (category, username) VALUES (?, ?)",
+    [category, username]
+  );
+};
+
 
