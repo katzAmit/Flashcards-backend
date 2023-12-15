@@ -191,7 +191,7 @@ export const userExists = async (username: string): Promise<boolean> => {
   });
 };
 export const getCategories = async (username: string): Promise<Category[]> => {
-  const categoriesQuery = "SELECT category FROM category WHERE username = ?";
+  const categoriesQuery = "SELECT category FROM categories WHERE username = ?";
   return new Promise<Category[]>((resolve, reject) => {
     db.all(categoriesQuery, [username], (err, rows: { category: string }[]) => {
       if (err) {

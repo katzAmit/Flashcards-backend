@@ -43,7 +43,7 @@ class DatabaseSingleton {
         console.log('Quizzes table initialized.');
       }
     });
-    DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS category (
+    DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS categories (
       category TEXT,
       username TEXT,
       PRIMARY KEY (category, username)
@@ -87,8 +87,8 @@ class DatabaseSingleton {
 
     categories.forEach((category) => {
       DatabaseSingleton.instance?.run(
-        `INSERT INTO category (category) VALUES (?)`,
-        [category],
+        `INSERT INTO categories (category, username) VALUES (?, ?)`,
+        [category, 'dyu@post.bgu.ac.il'],
         (err) => {
           if (err) {
             console.error('Error inserting category:', err.message);

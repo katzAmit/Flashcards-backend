@@ -152,7 +152,4 @@ export default {
       res.status(400).json({ error: 'User already exists' })
     }
   },
-  getCategory: async (req: Request, res: Response) => {
-
-  }
 };
