@@ -230,4 +230,54 @@ export const addCategory = async (username: string, category: string): Promise<v
   );
 };
 
+export const getCategoryRowCount = async (username: string, category: string): Promise<number> => {
+  return new Promise<number>((resolve, reject) => {
+    db.get(
+      "SELECT COUNT(*) as count FROM categories WHERE username = ? AND category = ?",
+      [username, category],
+      (error, result: { count: number }) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result ? result.count : 0);
+        }
+      }
+    );
+  });
+};
+
+export const getCategoryByFlashcardId = async (flashcardId: string): Promise<string> => {
+  return new Promise<string>((resolve, reject) => {
+    db.get(
+      "SELECT category FROM flashcards WHERE id = ?",
+      [flashcardId],
+      (error, result: { category: string }) => {
+        if (error) {
+          console.error("Error executing query:", error);
+          reject(error);
+        } else {
+          resolve(result ? result.category : "");
+        }
+      }
+    );
+  });
+};
+
+
+export const deleteCategory = async (username: string, category: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      "DELETE FROM categories WHERE username = ? AND category = ?",
+      [username, category],
+      (error) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      }
+    );
+  });
+};
+
 

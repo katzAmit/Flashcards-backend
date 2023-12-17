@@ -31,3 +31,9 @@ export type Quiz = {
   start_time: Date,
   end_time: Date
 }
+
+export type FilterCriteria = {
+  [key: string]: string[] | undefined;
+  // Add other criteria properties as needed
+}
+
