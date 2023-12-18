@@ -62,7 +62,9 @@ export default {
         const { cardId } = req.params;
         const category = await getCategoryByFlashcardId(cardId);
         const rowCount = await getCategoryRowCount(username, category);
-        if (rowCount == 1) { await deleteCategory(username, category); }
+        if (rowCount == 1) {
+          await deleteCategory(username, category);
+        }
         await deleteFlashcardById(cardId);
         res.json({
           message: `Flashcard with ID ${cardId} deleted successfully`,
@@ -179,10 +181,13 @@ export default {
         const selectedIndices = new Set<number>();
         const selectedDifficultyLevels = new Set<string>();
 
-        const numFlashcards = Math.floor(Math.random() * (selectedFlashcards.length - 2)) + 4;
+        const numFlashcards =
+          Math.floor(Math.random() * (selectedFlashcards.length - 2)) + 4;
 
         while (selectedIndices.size < numFlashcards) {
-          const randomIndex = Math.floor(Math.random() * selectedFlashcards.length);
+          const randomIndex = Math.floor(
+            Math.random() * selectedFlashcards.length
+          );
 
           if (!selectedIndices.has(randomIndex)) {
             selectedIndices.add(randomIndex);
@@ -192,16 +197,19 @@ export default {
           }
         }
 
-        const selectedDifficultyLevelsArray = Array.from(selectedDifficultyLevels).sort((a, b) => {
-          const difficultyOrder = ['Easy', 'Medium', 'Hard'];
+        const selectedDifficultyLevelsArray = Array.from(
+          selectedDifficultyLevels
+        ).sort((a, b) => {
+          const difficultyOrder = ["Easy", "Medium", "Hard"];
           return difficultyOrder.indexOf(a) - difficultyOrder.indexOf(b);
         });
 
         const selectedFlashcardIndices: number[] = Array.from(selectedIndices);
 
-        const selectedFlashcardsForQuiz: Flashcard[] = selectedFlashcardIndices.map(
-          (index: number) => selectedFlashcards[index]
-        );
+        const selectedFlashcardsForQuiz: Flashcard[] =
+          selectedFlashcardIndices.map(
+            (index: number) => selectedFlashcards[index]
+          );
 
         const quiz = {
           id: `Quiz_${i + 1}`,
@@ -220,6 +228,71 @@ export default {
       res.status(500).json({ error: "Failed to generate quizzes" });
     }
   },
+
+  generateMarathon: async (req: RequestWithUserPayload, res: Response) => {
+    const { category, days } = req.body;
+    const username = req.user?.username;
+    type Quiz = {
+      id: string;
+      title: string;
+      categories: any[]; // Update with the correct type
+      flashcards: any[]; // Update with the correct type
+      difficulty_levels: any[];
+    };
+
+    try {
+      const Marathon: Quiz[] = [];
+      const MarathonIndices: number[][] = new Array(days).fill([]);
+
+      const allFlashcardsInCategory = await getFlashcards(username, category);
+      const usedMap: number[] = new Array(allFlashcardsInCategory.length).fill(
+        0
+      );
+
+      if (allFlashcardsInCategory.length < days) {
+        // not enough for all days
+        res.status(400).json({
+          error: `Selected category doesn't have enough flashcards for a marathon.`,
+        });
+        return;
+      }
+
+      const numOfFlashcardsPerQuiz = allFlashcardsInCategory.length / days;
+
+      // divide the questions as indices
+      for (let i: number = 0; i < days; i += 1) {
+        for (let j: number = 0; j < numOfFlashcardsPerQuiz; j += 1) {
+          let randomIndex: number = Math.floor(Math.random() * usedMap.length);
+          while (usedMap[randomIndex] === 1) {
+            let randomIndex: number = Math.floor(
+              Math.random() * usedMap.length
+            );
+          }
+          usedMap[randomIndex] = 1;
+          MarathonIndices[i][j] = randomIndex;
+        }
+      }
+
+      // map the indices to quizzes
+      for (let i = 0; i < days; i += 1) {
+        const curQuiz: Quiz = {
+          id: `quiz${i + 1}`,
+          title: `Quiz ${i + 1}`,
+          categories: [category], // Update with the correct data structure
+          flashcards: MarathonIndices[i].map(
+            (index: number) => allFlashcardsInCategory[index]
+          ),
+          difficulty_levels: ["Easy", "Medium", "Hard"], // Update with the correct data structure
+        };
+        Marathon.push(curQuiz);
+      }
+      res.status(200).json(Marathon);
+    } catch (error) {
+      console.error("Error generating Marathon:", error);
+      res.status(500).json({ error: "Failed to generate Marathon" });
+    }
+  },
+
   // login
   loginPage: async (req: Request, res: Response) => {
     const { username, password } = req.body;
