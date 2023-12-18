@@ -67,7 +67,7 @@ export const deleteFlashcardById = async (id: string): Promise<void> => {
   });
 };
 export const getFlashcards = async (
-  username: string,
+  username: string | undefined,
   category?: string,
   difficulty_level?: string
 ): Promise<Flashcard[]> => {

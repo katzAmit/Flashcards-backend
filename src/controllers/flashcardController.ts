@@ -59,10 +59,10 @@ export default {
     try {
       if (req.user) {
         const username = req.user.username;
-        const {cardId} = req.params;
-        const category =  await getCategoryByFlashcardId(cardId);
+        const { cardId } = req.params;
+        const category = await getCategoryByFlashcardId(cardId);
         const rowCount = await getCategoryRowCount(username, category);
-        if (rowCount == 1) { await deleteCategory(username, category);}
+        if (rowCount == 1) { await deleteCategory(username, category); }
         await deleteFlashcardById(cardId);
         res.json({
           message: `Flashcard with ID ${cardId} deleted successfully`,
@@ -160,20 +160,66 @@ export default {
   },
   // quizzes
   getQuizzes: async (req: RequestWithUserPayload, res: Response) => {
+    const { categories } = req.body;
+    const username = req.user?.username;
+
     try {
-      const { cardId } = req.params;
-      const updatedFields: Partial<Flashcard> = req.body;
-      await updateFlashcardbyId(cardId, updatedFields);
-      const updatedFlashcard = await getFlashcardbyId(cardId);
-      if (!updatedFlashcard) {
-        return res.status(404).json({ error: "Flashcard not found" });
+      const quizzes = [];
+
+      for (let i = 0; i < Math.min(4, categories.length); i++) {
+        const selectedFlashcards = await getFlashcards(username, categories[i]);
+
+        if (selectedFlashcards.length < 3) {
+          res.status(400).json({
+            error: `Category '${categories[i]}' doesn't have enough flashcards for a quiz.`,
+          });
+          return;
+        }
+
+        const selectedIndices = new Set<number>();
+        const selectedDifficultyLevels = new Set<string>();
+
+        const numFlashcards = Math.floor(Math.random() * (selectedFlashcards.length - 2)) + 4;
+
+        while (selectedIndices.size < numFlashcards) {
+          const randomIndex = Math.floor(Math.random() * selectedFlashcards.length);
+
+          if (!selectedIndices.has(randomIndex)) {
+            selectedIndices.add(randomIndex);
+            selectedDifficultyLevels.add(
+              selectedFlashcards[randomIndex].difficulty_level
+            );
+          }
+        }
+
+        const selectedDifficultyLevelsArray = Array.from(selectedDifficultyLevels).sort((a, b) => {
+          const difficultyOrder = ['Easy', 'Medium', 'Hard'];
+          return difficultyOrder.indexOf(a) - difficultyOrder.indexOf(b);
+        });
+
+        const selectedFlashcardIndices: number[] = Array.from(selectedIndices);
+
+        const selectedFlashcardsForQuiz: Flashcard[] = selectedFlashcardIndices.map(
+          (index: number) => selectedFlashcards[index]
+        );
+
+        const quiz = {
+          id: `Quiz_${i + 1}`,
+          title: `Quiz ${i + 1}`,
+          categories: [categories[i]],
+          flashcards: selectedFlashcardsForQuiz,
+          difficulty_levels: selectedDifficultyLevelsArray,
+        };
+
+        quizzes.push(quiz);
       }
-      res.json(updatedFlashcard);
+
+      res.status(200).json(quizzes);
     } catch (error) {
-      res.status(500).json({ error: "Internal server error" });
+      console.error("Error generating quizzes:", error);
+      res.status(500).json({ error: "Failed to generate quizzes" });
     }
   },
-
   // login
   loginPage: async (req: Request, res: Response) => {
     const { username, password } = req.body;
