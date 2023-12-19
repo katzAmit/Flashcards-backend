@@ -10,7 +10,6 @@ import {
   deleteCategory,
   getCategoryRowCount,
   getCategories,
-  generateQuizzes,
   createFlashcard,
   deleteFlashcardById,
   getFlashcardbyId,
@@ -18,6 +17,7 @@ import {
   updateFlashcardbyId,
   checkCategoryExists,
   addCategory,
+  createQuizRecords,
 } from "../services/flashcardService";
 export default {
   // flashcards
@@ -134,6 +134,36 @@ export default {
       res.status(500).json({ error: "Internal server error" });
     }
   },
+  // submitQuiz: async (req: RequestWithUserPayload, res: Response) => {
+  //   try {
+  //     if (req.user) {
+  //       const id = uuidv4();
+  //       const username = req.user.username;
+  //       const { flashcards, start_time, end_time } = req.body;
+
+  //       // Update flashcards and create quiz records
+  //       await Promise.all([
+  //         updateFlashCards(username, flashcards),
+  //         createQuizRecords(id, username, flashcards, start_time, end_time)
+  //       ]);
+
+  //       res.status(200).json({ message: 'Quiz submitted successfully' });
+  //     } else {
+  //       res.status(401).json({ error: 'Unauthorized' });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error submitting quiz:", error);
+  //     res.status(400).json({ error: "Invalid data" });
+  //   }
+  // },
+  updateFlashCards: async (username: string, flashcards: Flashcard[]) => {
+    for (const flashcard of flashcards) {
+      const id = flashcard.id;
+      const updatedFields = { 'username': flashcard };
+      // await updateFlashcardById(flashcard.id, updatedFields);
+    }
+
+  },
   getCategories: async (req: RequestWithUserPayload, res: Response) => {
     try {
       const username = req.user?.username;
@@ -148,18 +178,6 @@ export default {
       res.status(500).json({ error: "Internal server error" });
     }
   },
-  generateQuizzes: async (
-    req: RequestWithUserPayload,
-    res: Response
-  ): Promise<void> => {
-    // try {
-    //   const quizes: Quiz[] = await generateQuizzes();
-    //   res.status(200).json({ message: 'Quizzes generated successfully.' });
-    // } catch (error) {
-    //   console.error(error);
-    //   res.status(500).json({ error: 'Failed to generate quizzes.' });
-    // }
-  },
   // quizzes
   getQuizzes: async (req: RequestWithUserPayload, res: Response) => {
     const { categories } = req.body;
@@ -168,10 +186,10 @@ export default {
     try {
       const quizzes = [];
 
-      for (let i = 0; i < Math.min(4, categories.length); i++) {
+      for (let i = 0; i < categories.length; i++) {
         const selectedFlashcards = await getFlashcards(username, categories[i]);
 
-        if (selectedFlashcards.length < 3) {
+        if (selectedFlashcards.length < 5) {
           res.status(400).json({
             error: `Category '${categories[i]}' doesn't have enough flashcards for a quiz.`,
           });
@@ -181,8 +199,7 @@ export default {
         const selectedIndices = new Set<number>();
         const selectedDifficultyLevels = new Set<string>();
 
-        const numFlashcards =
-          Math.floor(Math.random() * (selectedFlashcards.length - 2)) + 4;
+        const numFlashcards = selectedFlashcards.length
 
         while (selectedIndices.size < numFlashcards) {
           const randomIndex = Math.floor(

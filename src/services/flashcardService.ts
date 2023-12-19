@@ -66,6 +66,36 @@ export const deleteFlashcardById = async (id: string): Promise<void> => {
     });
   });
 };
+export const createQuizRecords = async (quizId: string, username: string, flashcards: any[], start_time: Date, end_time: Date) => {
+  return new Promise<void>((resolve, reject) => {
+    const insertQuery = `INSERT INTO quizzes (quiz_id, flashcard_id, username, start_date, end_date) VALUES (?, ?, ?, ?, ?)`;
+
+    // Assuming each flashcard has an 'id' property
+    const values = flashcards.map(flashcard => [quizId, flashcard.id, username, start_time, end_time]);
+
+    db.serialize(() => {
+      db.run('BEGIN TRANSACTION');
+      values.forEach(value => {
+        db.run(insertQuery, value, function (err) {
+          if (err) {
+            db.run('ROLLBACK');
+            reject(err);
+          }
+        });
+      });
+
+      db.run('COMMIT', (err) => {
+        if (err) {
+          db.run('ROLLBACK');
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  });
+};
+
 export const getFlashcards = async (
   username: string | undefined,
   category?: string,
@@ -113,17 +143,12 @@ export const getFlashcardbyId = async (
     );
   });
 };
-// quizzes
-export const generateQuizzes = async (): Promise<Quiz[]> => {
-  return new Promise<Quiz[]>((resolve, reject) => { });
-};
-
 // login
 export const validateUser = async (
   username: string,
   password: string
 ): Promise<User> => {
-  const userQuery = "SELECT * FROM user WHERE username = ? AND password = ?";
+  const userQuery = "SELECT * FROM users WHERE username = ? AND password = ?";
   return new Promise<User>((resolve, reject) => {
     db.get(userQuery, [username, password], (err, row: User) => {
       if (err) {
@@ -143,7 +168,7 @@ export const registerUser = async (
 ): Promise<boolean> => {
   return new Promise<boolean>((resolve, reject) => {
     db.run(
-      `INSERT INTO User (username, password, fname, lname) VALUES (?, ?, ?, ?)`,
+      `INSERT INTO users (username, password, fname, lname) VALUES (?, ?, ?, ?)`,
       [username, password, fname, lname],
       (err) => {
         if (err) {
@@ -159,7 +184,7 @@ export const registerUser = async (
 export const getUserFirstName = async (
   username: string
 ): Promise<string | null> => {
-  const userQuery = "SELECT fname FROM user WHERE username = ?";
+  const userQuery = "SELECT fname FROM users WHERE username = ?";
   return new Promise<string | null>((resolve, reject) => {
     db.get(userQuery, [username], (err, row: { fname?: string }) => {
       if (err) {
@@ -175,7 +200,7 @@ export const getUserFirstName = async (
   });
 };
 export const userExists = async (username: string): Promise<boolean> => {
-  const userQuery = "SELECT username FROM user WHERE username = ?";
+  const userQuery = "SELECT username FROM users WHERE username = ?";
   return new Promise<boolean>((resolve, reject) => {
     db.get(userQuery, [username], (err, row: { username?: string }) => {
       if (err) {
@@ -233,7 +258,7 @@ export const addCategory = async (username: string, category: string): Promise<v
 export const getCategoryRowCount = async (username: string, category: string): Promise<number> => {
   return new Promise<number>((resolve, reject) => {
     db.get(
-      "SELECT COUNT(*) as count FROM categories WHERE username = ? AND category = ?",
+      "SELECT COUNT(*) as count FROM flashcards WHERE username = ? AND category = ?",
       [username, category],
       (error, result: { count: number }) => {
         if (error) {

@@ -23,7 +23,7 @@ class DatabaseSingleton {
 
   private static initializeTables() {
 
-    DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS user (
+    DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS users (
       username TEXT PRIMARY KEY,
       password TEXT,
       fname TEXT,
@@ -32,10 +32,12 @@ class DatabaseSingleton {
     DatabaseSingleton.instance?.run(`CREATE TABLE IF NOT EXISTS quizzes (
       quiz_id INTEGER,
       flashcard_id INTEGER,
+      username TEXT
       start_date DATE,
       end_date DATE,
       PRIMARY KEY (quiz_id, flashcard_id),
       FOREIGN KEY (flashcard_id) REFERENCES flashcards(id)
+      FOREIGN KEY (username) REFERENCES users(username)
     )`, (initErr) => {
       if (initErr) {
         console.error('Error initializing quizzes table:', initErr.message);
@@ -57,7 +59,7 @@ class DatabaseSingleton {
       answer TEXT,
       category TEXT,
       difficulty_level TEXT CHECK( difficulty_level IN ('Easy','Medium','Hard') ),
-      FOREIGN KEY (username) REFERENCES user(username),
+      FOREIGN KEY (username) REFERENCES users(username),
       FOREIGN KEY (category) REFERENCES category(category)
     )`, (initErr) => {
       if (initErr) {
@@ -70,7 +72,7 @@ class DatabaseSingleton {
 
   private static insertUser(username: string, password: string, fname: string, lname: string) {
     DatabaseSingleton.instance?.run(
-      `INSERT INTO user (username, password, fname, lname) VALUES (?, ?, ?, ?)`,
+      `INSERT INTO users (username, password, fname, lname) VALUES (?, ?, ?, ?)`,
       [username, password, fname, lname],
       (err) => {
         if (err) {
@@ -83,7 +85,7 @@ class DatabaseSingleton {
   }
 
   private static insertCategories() {
-    const categories = ['Biology', 'History', 'Geography'];
+    const categories = ['Dynamic Programming', 'NP Completeness', 'Knapsack Problem', 'Graph Algorithms', 'Data Structures',];
 
     categories.forEach((category) => {
       DatabaseSingleton.instance?.run(
@@ -110,109 +112,168 @@ class DatabaseSingleton {
   }
 
   private static insertFlashcards() {
-    const cards = [
-      // Biology Category
+    const flashcards = [
       {
         id: 1,
-        category: "Biology",
-        question: "What is Evolution?",
-        answer: "Evolution is a process that involves changes in the inherited traits of a population over successive generations."
+        category: "Dynamic Programming",
+        question: "How does dynamic programming differ from greedy algorithms?",
+        answer: "Breaks problems into smaller parts for one-time solution."
       },
       {
         id: 2,
-        category: "Biology",
-        question: "Define Photosynthesis.",
-        answer: "Photosynthesis is the process by which green plants and some other organisms use sunlight to synthesize foods with the help of chlorophyll pigments."
+        category: "Dynamic Programming",
+        question: "Solve the Fibonacci sequence problem using dynamic programming.",
+        answer: "Store subproblems' solutions for Fibonacci calculation."
       },
       {
         id: 3,
-        category: "Biology",
-        question: "Explain the structure of DNA.",
-        answer: "DNA, or deoxyribonucleic acid, i s a double-stranded helical structure that contains genetic instructions used in the development and functioning of all known living organisms."
+        category: "Dynamic Programming",
+        question: "Explain the concept of memoization in dynamic programming.",
+        answer: "Cache costly function results to avoid redundant computations."
       },
       {
         id: 4,
-        category: "Biology",
-        question: "What is a cell membrane?",
-        answer: "The cell membrane, also known as the plasma membrane, is a biological membrane that separates the interior of all cells from the outside environment. It consists of a lipid bilayer with embedded proteins."
+        category: "Dynamic Programming",
+        question: "Provide an example problem where dynamic programming can be applied other than Fibonacci.",
+        answer: "Longest common subsequence problem demonstrates this technique."
       },
       {
         id: 5,
-        category: "Biology",
-        question: "Name the four basic types of tissue in the human body.",
-        answer: "The four basic types of tissue in the human body are epithelial, connective, muscle, and nervous tissue."
+        category: "Dynamic Programming",
+        question: "Explain the implications of time complexity in dynamic programming solutions.",
+        answer: "Optimizes time but increases space complexity."
       },
-
-      // History Category
       {
         id: 6,
-        category: "History",
-        question: "Who was the first President of the United States?",
-        answer: "George Washington was the first President of the United States, serving from April 30, 1789, to March 4, 1797."
+        category: "NP Completeness",
+        question: "Define the term 'reduction' in the context of NP-completeness.",
+        answer: "Transform problems so solving one solves the other."
       },
       {
         id: 7,
-        category: "History",
-        question: "What event marked the beginning of World War II?",
-        answer: "The invasion of Poland by Germany on September 1, 1939, marked the beginning of World War II."
+        category: "NP Completeness",
+        question: "Discuss the implications of proving a problem NP-complete.",
+        answer: "Implies a problem's difficulty in NP and its link to P=NP."
       },
       {
         id: 8,
-        category: "History",
-        question: "When was the Declaration of Independence adopted?",
-        answer: "The Declaration of Independence was adopted on July 4, 1776, by the Continental Congress."
+        category: "NP Completeness",
+        question: "Explain the significance of Cook's theorem in NP-completeness.",
+        answer: "SAT problem's NP-completeness foundation."
       },
       {
         id: 9,
-        category: "History",
-        question: "Who was the leader of the Civil Rights Movement in the United States?",
-        answer: "Martin Luther King Jr. was a prominent leader in the American Civil Rights Movement during the 1950s and 1960s."
+        category: "NP Completeness",
+        question: "Provide an example of an NP-complete problem other than the Boolean satisfiability problem (SAT).",
+        answer: "Traveling salesman problem as another NP-complete issue."
       },
       {
         id: 10,
-        category: "History",
-        question: "Name the ancient wonder of the world that is still standing today.",
-        answer: "The Great Pyramid of Giza is the only ancient wonder of the world that is still standing today."
+        category: "NP Completeness",
+        question: "Explain the concept of polynomial-time verification in NP problems.",
+        answer: "NP problems allow polynomial-time solution checks."
       },
-
-      // Geography Category
       {
         id: 11,
-        category: "Geography",
-        question: "What is the capital of Japan?",
-        answer: "Tokyo is the capital of Japan."
+        category: "Knapsack Problem",
+        question: "Describe the 0/1 Knapsack problem and its applications in real-world scenarios.",
+        answer: "Optimize item selection within weight constraints for maximum value."
       },
       {
         id: 12,
-        category: "Geography",
-        question: "Name the longest river in the world.",
-        answer: "The Nile River is the longest river in the world."
+        category: "Knapsack Problem",
+        question: "Explain the difference between the 0/1 Knapsack problem and the fractional Knapsack problem.",
+        answer: "0/1 - items are whole; fractional - items can be divided."
       },
       {
         id: 13,
-        category: "Geography",
-        question: "Which continent is known as the 'Land of Kangaroos'?",
-        answer: "Australia is known as the 'Land of Kangaroos.'"
+        category: "Knapsack Problem",
+        question: "Provide an algorithm to solve the Knapsack problem using dynamic programming.",
+        answer: "Use a table to iteratively find the maximum value."
       },
       {
         id: 14,
-        category: "Geography",
-        question: "What is the highest mountain in North America?",
-        answer: "Denali, also known as Mount McKinley, is the highest mountain in North America."
+        category: "Knapsack Problem",
+        question: "Discuss the concept of 'greedy choice' in the Knapsack problem.",
+        answer: "Optimal solution might not come from maximum value-to-weight choice."
       },
       {
         id: 15,
-        category: "Geography",
-        question: "Which country is known as the 'Land of the Rising Sun'?",
-        answer: "Japan is known as the 'Land of the Rising Sun.'"
-      }
+        category: "Knapsack Problem",
+        question: "Explain how dynamic programming reduces time complexity in solving the Knapsack problem.",
+        answer: "Reduces time by storing subproblem solutions."
+      },
+      {
+        id: 16,
+        category: "Graph Algorithms",
+        question: "Describe Prim's algorithm for finding a minimum spanning tree.",
+        answer: "Builds minimum spanning tree by adding closest nodes."
+      },
+      {
+        id: 17,
+        category: "Graph Algorithms",
+        question: "Discuss Kruskal's algorithm and its advantages over Prim's algorithm.",
+        answer: "Grows tree with smallest edges, efficient for sparse graphs."
+      },
+      {
+        id: 18,
+        category: "Graph Algorithms",
+        question: "Explain how Dijkstra's algorithm works and its time complexity.",
+        answer: "Finds shortest path in weighted graphs with specific complexities."
+      },
+      {
+        id: 19,
+        category: "Graph Algorithms",
+        question: "Provide an example of where Bellman-Ford algorithm is preferred over Dijkstra's algorithm.",
+        answer: "Handles negative edge weights unlike Dijkstra's."
+      },
+      {
+        id: 20,
+        category: "Graph Algorithms",
+        question: "Discuss the concept of 'backtracking' in graph algorithms.",
+        answer: "Explores graph paths, used in algorithms like DFS."
+      },
+      {
+        id: 21,
+        category: "Data Structures",
+        question: "Explain the working principles behind a Red-Black tree.",
+        answer: "Self-balancing trees ensuring logarithmic height."
+      },
+      {
+        id: 22,
+        category: "Data Structures",
+        question: "Discuss the differences between a stack and a queue.",
+        answer: "LIFO vs. FIFO principles for different uses."
+      },
+      {
+        id: 23,
+        category: "Data Structures",
+        question: "Provide scenarios where a hash table is preferred over a binary search tree.",
+        answer: "Best for dynamic data, offering constant-time operations."
+      },
+      {
+        id: 24,
+        category: "Data Structures",
+        question: "Explain the concept of a trie and its applications.",
+        answer: "Efficient storage for strings, used in autocomplete systems."
+      },
+      {
+        id: 25,
+        category: "Data Structures",
+        question: "Discuss the concept of 'collision resolution' in hash tables.",
+        answer: "Methods to handle hash table index clashes."
+      },
     ];
 
-    cards.forEach((card) => {
+
+
+
+    flashcards.forEach((flashcards) => {
+      const randomDifficulty = getRandomDifficulty()
       DatabaseSingleton.instance?.run(
         `INSERT INTO flashcards (id, username, question, answer, category, difficulty_level)
           VALUES (?, ?, ?, ?, ?, ?)`,
-        [card.id, 'dyu@post.bgu.ac.il', card.question, card.answer, card.category, 'Medium'], // Set default difficulty
+        [flashcards.id, 'dyu@post.bgu.ac.il', flashcards.question, flashcards.answer, flashcards.category, randomDifficulty], // Set default difficulty
         (err) => {
           if (err) {
             console.error('Error inserting flashcard:', err.message);
@@ -224,5 +285,9 @@ class DatabaseSingleton {
     });
   }
 }
-
+function getRandomDifficulty() {
+  const difficulties = ['Easy', 'Medium', 'Hard'];
+  const randomIndex = Math.floor(Math.random() * difficulties.length);
+  return difficulties[randomIndex];
+}
 export default DatabaseSingleton;
