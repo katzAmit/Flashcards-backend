@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as flashcardService from "../services/flashcardService";
-import { Category, Flashcard } from "../types/flashcardInterfaces";
+import { Category, Flashcard, Marathon } from "../types/flashcardInterfaces";
 import { v4 as uuidv4 } from "uuid";
 import jwt from "jsonwebtoken";
 import { User } from "../types/flashcardInterfaces";
@@ -18,6 +18,7 @@ import {
   checkCategoryExists,
   addCategory,
   createQuizRecords,
+  getMarathons,
 } from "../services/flashcardService";
 export default {
   // flashcards
@@ -159,10 +160,9 @@ export default {
   updateFlashCards: async (username: string, flashcards: Flashcard[]) => {
     for (const flashcard of flashcards) {
       const id = flashcard.id;
-      const updatedFields = { 'username': flashcard };
+      const updatedFields = { username: flashcard };
       // await updateFlashcardById(flashcard.id, updatedFields);
     }
-
   },
   getCategories: async (req: RequestWithUserPayload, res: Response) => {
     try {
@@ -199,7 +199,7 @@ export default {
         const selectedIndices = new Set<number>();
         const selectedDifficultyLevels = new Set<string>();
 
-        const numFlashcards = selectedFlashcards.length
+        const numFlashcards = selectedFlashcards.length;
 
         while (selectedIndices.size < numFlashcards) {
           const randomIndex = Math.floor(
@@ -307,6 +307,23 @@ export default {
     } catch (error) {
       console.error("Error generating Marathon:", error);
       res.status(500).json({ error: "Failed to generate Marathon" });
+    }
+  },
+
+  getMarathons: async (req: RequestWithUserPayload, res: Response) => {
+    try {
+      const username = req.user?.username;
+
+      if (!username) {
+        return res
+          .status(500)
+          .json({ error: "Internal server error, user not found" });
+      }
+
+      const marathons: Marathon[] = await getMarathons(username);
+      res.json(marathons);
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
     }
   },
 

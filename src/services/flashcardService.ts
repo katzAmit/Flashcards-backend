@@ -1,6 +1,6 @@
 import { Database } from "sqlite3";
 import DatabaseSingleton from "../db/DatabaseSingleton";
-import { Category, Flashcard } from "../types/flashcardInterfaces";
+import { Category, Flashcard, Marathon } from "../types/flashcardInterfaces";
 import { User } from "../types/flashcardInterfaces";
 import { Quiz } from "../types/flashcardInterfaces";
 import { resolve } from "path";
@@ -66,27 +66,39 @@ export const deleteFlashcardById = async (id: string): Promise<void> => {
     });
   });
 };
-export const createQuizRecords = async (quizId: string, username: string, flashcards: any[], start_time: Date, end_time: Date) => {
+export const createQuizRecords = async (
+  quizId: string,
+  username: string,
+  flashcards: any[],
+  start_time: Date,
+  end_time: Date
+) => {
   return new Promise<void>((resolve, reject) => {
     const insertQuery = `INSERT INTO quizzes (quiz_id, flashcard_id, username, start_date, end_date) VALUES (?, ?, ?, ?, ?)`;
 
     // Assuming each flashcard has an 'id' property
-    const values = flashcards.map(flashcard => [quizId, flashcard.id, username, start_time, end_time]);
+    const values = flashcards.map((flashcard) => [
+      quizId,
+      flashcard.id,
+      username,
+      start_time,
+      end_time,
+    ]);
 
     db.serialize(() => {
-      db.run('BEGIN TRANSACTION');
-      values.forEach(value => {
+      db.run("BEGIN TRANSACTION");
+      values.forEach((value) => {
         db.run(insertQuery, value, function (err) {
           if (err) {
-            db.run('ROLLBACK');
+            db.run("ROLLBACK");
             reject(err);
           }
         });
       });
 
-      db.run('COMMIT', (err) => {
+      db.run("COMMIT", (err) => {
         if (err) {
-          db.run('ROLLBACK');
+          db.run("ROLLBACK");
           reject(err);
         } else {
           resolve();
@@ -232,7 +244,10 @@ export const getCategories = async (username: string): Promise<Category[]> => {
   });
 };
 //categories
-export const checkCategoryExists = (username: string, category: string): Promise<boolean> => {
+export const checkCategoryExists = (
+  username: string,
+  category: string
+): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     db.get(
       "SELECT 1 FROM categories WHERE username = ? AND category = ? LIMIT 1",
@@ -248,14 +263,20 @@ export const checkCategoryExists = (username: string, category: string): Promise
   });
 };
 
-export const addCategory = async (username: string, category: string): Promise<void> => {
-  await db.run(
-    "INSERT INTO categories (category, username) VALUES (?, ?)",
-    [category, username]
-  );
+export const addCategory = async (
+  username: string,
+  category: string
+): Promise<void> => {
+  await db.run("INSERT INTO categories (category, username) VALUES (?, ?)", [
+    category,
+    username,
+  ]);
 };
 
-export const getCategoryRowCount = async (username: string, category: string): Promise<number> => {
+export const getCategoryRowCount = async (
+  username: string,
+  category: string
+): Promise<number> => {
   return new Promise<number>((resolve, reject) => {
     db.get(
       "SELECT COUNT(*) as count FROM flashcards WHERE username = ? AND category = ?",
@@ -271,7 +292,9 @@ export const getCategoryRowCount = async (username: string, category: string): P
   });
 };
 
-export const getCategoryByFlashcardId = async (flashcardId: string): Promise<string> => {
+export const getCategoryByFlashcardId = async (
+  flashcardId: string
+): Promise<string> => {
   return new Promise<string>((resolve, reject) => {
     db.get(
       "SELECT category FROM flashcards WHERE id = ?",
@@ -288,8 +311,10 @@ export const getCategoryByFlashcardId = async (flashcardId: string): Promise<str
   });
 };
 
-
-export const deleteCategory = async (username: string, category: string): Promise<void> => {
+export const deleteCategory = async (
+  username: string,
+  category: string
+): Promise<void> => {
   return new Promise((resolve, reject) => {
     db.run(
       "DELETE FROM categories WHERE username = ? AND category = ?",
@@ -305,4 +330,45 @@ export const deleteCategory = async (username: string, category: string): Promis
   });
 };
 
+export const createMarathon = async (marathon: Marathon): Promise<void> => {
+  const {
+    id: id,
+    category: category,
+    quizzes_id: quizzes_id,
+    total_days: total_days,
+    current_day: current_day,
+  } = marathon;
+  return new Promise<void>((resolve, reject) => {
+    db.run(
+      "INSERT INTO marathons (id, category, quizzes_id, total_days, current_day) VALUES (?, ?, ?, ?, ?)",
+      [id, category, quizzes_id, total_days, current_day],
+      function (err) {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          console.log(`New marathon added with ID: ${this.lastID}`);
+          resolve();
+        }
+      }
+    );
+  });
+};
 
+export const getMarathons = async (
+  username: string | undefined
+): Promise<Marathon[]> => {
+  return new Promise<Marathon[]>((resolve, reject) => {
+    let query = "SELECT * FROM marathons WHERE username = ?";
+    const queryParams = [username];
+
+    db.all(query, queryParams, (err, rows: Marathon[]) => {
+      if (err) {
+        console.error(err);
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+};
