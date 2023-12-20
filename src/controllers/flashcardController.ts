@@ -19,6 +19,7 @@ import {
   addCategory,
   createQuizRecords,
   getMarathons,
+  createMarathon,
 } from "../services/flashcardService";
 export default {
   // flashcards
@@ -247,7 +248,7 @@ export default {
   },
 
   generateMarathon: async (req: RequestWithUserPayload, res: Response) => {
-    const { category, days } = req.body;
+    const { category, total_days } = req.body;
     const username = req.user?.username;
     type Quiz = {
       id: string;
@@ -259,14 +260,14 @@ export default {
 
     try {
       const Marathon: Quiz[] = [];
-      const MarathonIndices: number[][] = new Array(days).fill([]);
+      const MarathonIndices: number[][] = new Array(total_days).fill([]);
 
       const allFlashcardsInCategory = await getFlashcards(username, category);
       const usedMap: number[] = new Array(allFlashcardsInCategory.length).fill(
         0
       );
 
-      if (allFlashcardsInCategory.length < days) {
+      if (allFlashcardsInCategory.length < total_days) {
         // not enough for all days
         res.status(400).json({
           error: `Selected category doesn't have enough flashcards for a marathon.`,
@@ -274,10 +275,11 @@ export default {
         return;
       }
 
-      const numOfFlashcardsPerQuiz = allFlashcardsInCategory.length / days;
+      const numOfFlashcardsPerQuiz =
+        allFlashcardsInCategory.length / total_days;
 
       // divide the questions as indices
-      for (let i: number = 0; i < days; i += 1) {
+      for (let i: number = 0; i < total_days; i += 1) {
         for (let j: number = 0; j < numOfFlashcardsPerQuiz; j += 1) {
           let randomIndex: number = Math.floor(Math.random() * usedMap.length);
           while (usedMap[randomIndex] === 1) {
@@ -291,7 +293,7 @@ export default {
       }
 
       // map the indices to quizzes
-      for (let i = 0; i < days; i += 1) {
+      for (let i = 0; i < total_days; i += 1) {
         const curQuiz: Quiz = {
           id: `quiz${i + 1}`,
           title: `Quiz ${i + 1}`,
@@ -322,6 +324,32 @@ export default {
 
       const marathons: Marathon[] = await getMarathons(username);
       res.json(marathons);
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
+
+  createMarathon: async (req: RequestWithUserPayload, res: Response) => {
+    try {
+      const { category, total_days } = req.body;
+      const id = uuidv4();
+      const username = req.user?.username;
+      const current_day = 1;
+      if (!username) {
+        return res
+          .status(500)
+          .json({ error: "Internal server error, user not found" });
+      }
+
+      const newMarathon: Marathon = {
+        id: id,
+        username: username,
+        category: category,
+        total_days: total_days,
+        current_day: current_day,
+      };
+      await createMarathon(newMarathon);
+      res.json(newMarathon);
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
     }

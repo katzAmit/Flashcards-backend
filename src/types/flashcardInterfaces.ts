@@ -41,7 +41,6 @@ export type Marathon = {
   id: string;
   username: string;
   category: Category;
-  quizzes_id: number;
   total_days: number;
   current_day: number;
 };

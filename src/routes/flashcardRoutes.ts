@@ -19,7 +19,7 @@ router.get("/categories", cardsController.getCategories);
 
 router.get("/marathon", cardsController.getMarathons);
 
-// router.post("/marathon", cardsController.createMarathon);
+router.post("/marathon", cardsController.createMarathon);
 
 // router.post('submit_quiz', cardsController.submitQuiz)
 export default router;

@@ -31,6 +31,7 @@ class DatabaseSingleton {
       fname TEXT,
       lname TEXT
     )`);
+
     DatabaseSingleton.instance?.run(
       `CREATE TABLE IF NOT EXISTS quizzes (
       quiz_id INTEGER,
@@ -81,17 +82,15 @@ class DatabaseSingleton {
 
     DatabaseSingleton.instance?.run(
       `CREATE TABLE IF NOT EXISTS marathons (
-      id TEXT PRIMARY KEY,
-      username TEXT,
-      category TEXT,
-      quizzes_id INTEGER,
-      total_days INTEGER,
-      current_day INTEGER,
-      FOREIGN KEY (category) REFERENCES categories(category),
-      FOREIGN KEY (username) REFERENCES users(username),
-      FOREIGN KEY (quizzes_id) REFERENCES quizzes(quiz_id)
-    )`,
-      (initErr) => {
+        id TEXT PRIMARY KEY,
+        username TEXT,
+        category TEXT,
+        total_days INTEGER,
+        current_day INTEGER,
+        FOREIGN KEY (category) REFERENCES categories(category),
+        FOREIGN KEY (username) REFERENCES users(username)
+      )`,
+      (initErr: any) => {
         if (initErr) {
           console.error("Error initializing marathons table:", initErr.message);
         } else {
@@ -365,15 +364,13 @@ class DatabaseSingleton {
         id: 1,
         username: "dyu@post.bgu.ac.il",
         category: "Dynamic Programming",
-        quizzes_id: 100,
         total_days: 10,
         current_day: 5,
       },
       {
         id: 2,
         username: "dyu@post.bgu.ac.il",
-        category: "NP Completeness",
-        quizzes_id: 101,
+        category: "wassup",
         total_days: 15,
         current_day: 7,
       },
@@ -381,7 +378,6 @@ class DatabaseSingleton {
         id: 3,
         username: "dyu@post.bgu.ac.il",
         category: "Knapsack Problem",
-        quizzes_id: 102,
         total_days: 12,
         current_day: 3,
       },
@@ -389,7 +385,6 @@ class DatabaseSingleton {
         id: 4,
         username: "dyu@post.bgu.ac.il",
         category: "Graph Algorithms",
-        quizzes_id: 103,
         total_days: 20,
         current_day: 12,
       },
@@ -397,7 +392,6 @@ class DatabaseSingleton {
         id: 5,
         username: "dyu@post.bgu.ac.il",
         category: "Data Structures",
-        quizzes_id: 104,
         total_days: 8,
         current_day: 2,
       },
@@ -405,12 +399,11 @@ class DatabaseSingleton {
 
     marathons.forEach((marathon) => {
       DatabaseSingleton.instance?.run(
-        `INSERT INTO marathons (id, username, category, quizzes_id, total_days, current_day) VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO marathons (id, username, category, total_days, current_day) VALUES (?, ?, ?, ?, ?)`,
         [
           marathon.id,
           marathon.username,
           marathon.category,
-          marathon.quizzes_id,
           marathon.total_days,
           marathon.current_day,
         ],

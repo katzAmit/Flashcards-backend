@@ -333,15 +333,15 @@ export const deleteCategory = async (
 export const createMarathon = async (marathon: Marathon): Promise<void> => {
   const {
     id: id,
+    username: username,
     category: category,
-    quizzes_id: quizzes_id,
     total_days: total_days,
     current_day: current_day,
   } = marathon;
   return new Promise<void>((resolve, reject) => {
     db.run(
-      "INSERT INTO marathons (id, category, quizzes_id, total_days, current_day) VALUES (?, ?, ?, ?, ?)",
-      [id, category, quizzes_id, total_days, current_day],
+      "INSERT INTO marathons (id, username, category, total_days, current_day) VALUES (?, ?, ?, ?, ?)",
+      [id, username, category, total_days, current_day],
       function (err) {
         if (err) {
           console.error(err);
