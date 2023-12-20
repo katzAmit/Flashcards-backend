@@ -31,17 +31,14 @@ class DatabaseSingleton {
       fname TEXT,
       lname TEXT
     )`);
-
     DatabaseSingleton.instance?.run(
       `CREATE TABLE IF NOT EXISTS quizzes (
-      quiz_id INTEGER,
-      flashcard_id INTEGER,
-      username TEXT
+      id TEXT PRIMARY KEY,
+      username TEXT,
       start_date DATE,
       end_date DATE,
-      PRIMARY KEY (quiz_id, flashcard_id),
-      FOREIGN KEY (flashcard_id) REFERENCES flashcards(id)
-      FOREIGN KEY (username) REFERENCES users(username)
+      category TEXT,
+      flashcards INTEGER
     )`,
       (initErr) => {
         if (initErr) {

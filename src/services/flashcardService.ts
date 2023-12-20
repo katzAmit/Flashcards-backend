@@ -66,45 +66,26 @@ export const deleteFlashcardById = async (id: string): Promise<void> => {
     });
   });
 };
-export const createQuizRecords = async (
+export const createQuizRecord = async (
   quizId: string,
   username: string,
-  flashcards: any[],
+  num_flashcards: number,
   start_time: Date,
-  end_time: Date
+  end_time: Date,
+  category: string
 ) => {
   return new Promise<void>((resolve, reject) => {
-    const insertQuery = `INSERT INTO quizzes (quiz_id, flashcard_id, username, start_date, end_date) VALUES (?, ?, ?, ?, ?)`;
-
-    // Assuming each flashcard has an 'id' property
-    const values = flashcards.map((flashcard) => [
-      quizId,
-      flashcard.id,
-      username,
-      start_time,
-      end_time,
-    ]);
-
-    db.serialize(() => {
-      db.run("BEGIN TRANSACTION");
-      values.forEach((value) => {
-        db.run(insertQuery, value, function (err) {
-          if (err) {
-            db.run("ROLLBACK");
-            reject(err);
-          }
-        });
-      });
-
-      db.run("COMMIT", (err) => {
+    db.run(
+      `INSERT INTO quizzes (id, username, start_date, end_date, category, flashcards) VALUES (?, ?, ?, ?, ?, ?)`,
+      [quizId, username, start_time, end_time, category, num_flashcards],
+      (err) => {
         if (err) {
-          db.run("ROLLBACK");
-          reject(err);
+          reject();
         } else {
           resolve();
         }
-      });
-    });
+      }
+    );
   });
 };
 
@@ -328,6 +309,19 @@ export const deleteCategory = async (
       }
     );
   });
+};
+
+export const updateFlashCards = async (flashcards: Flashcard[]) => {
+  for (const flashcard of flashcards) {
+    const updatedFields: Partial<Flashcard> = {
+      username: flashcard.username,
+      question: flashcard.question,
+      answer: flashcard.answer,
+      category: flashcard.category,
+      difficulty_level: flashcard.difficulty_level,
+    };
+    await updateFlashcardbyId(flashcard.id, updatedFields);
+  }
 };
 
 export const createMarathon = async (marathon: Marathon): Promise<void> => {

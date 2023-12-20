@@ -17,7 +17,8 @@ import {
   updateFlashcardbyId,
   checkCategoryExists,
   addCategory,
-  createQuizRecords,
+  createQuizRecord,
+  updateFlashCards,
   getMarathons,
   createMarathon,
 } from "../services/flashcardService";
@@ -136,33 +137,33 @@ export default {
       res.status(500).json({ error: "Internal server error" });
     }
   },
-  // submitQuiz: async (req: RequestWithUserPayload, res: Response) => {
-  //   try {
-  //     if (req.user) {
-  //       const id = uuidv4();
-  //       const username = req.user.username;
-  //       const { flashcards, start_time, end_time } = req.body;
+  submitQuiz: async (req: RequestWithUserPayload, res: Response) => {
+    try {
+      if (req.user) {
+        const id = uuidv4();
+        const username = req.user.username;
+        const { flashcards, start_time, end_time } = req.body;
+        const allflashcards: Flashcard[] = flashcards;
+        // Update flashcards and create quiz records
+        await Promise.all([
+          updateFlashCards(flashcards),
+          createQuizRecord(
+            id,
+            username,
+            flashcards.length,
+            start_time,
+            end_time,
+            allflashcards[0].category
+          ),
+        ]);
 
-  //       // Update flashcards and create quiz records
-  //       await Promise.all([
-  //         updateFlashCards(username, flashcards),
-  //         createQuizRecords(id, username, flashcards, start_time, end_time)
-  //       ]);
-
-  //       res.status(200).json({ message: 'Quiz submitted successfully' });
-  //     } else {
-  //       res.status(401).json({ error: 'Unauthorized' });
-  //     }
-  //   } catch (error) {
-  //     console.error("Error submitting quiz:", error);
-  //     res.status(400).json({ error: "Invalid data" });
-  //   }
-  // },
-  updateFlashCards: async (username: string, flashcards: Flashcard[]) => {
-    for (const flashcard of flashcards) {
-      const id = flashcard.id;
-      const updatedFields = { username: flashcard };
-      // await updateFlashcardById(flashcard.id, updatedFields);
+        res.status(200).json({ message: "Quiz submitted successfully" });
+      } else {
+        res.status(401).json({ error: "Unauthorized" });
+      }
+    } catch (error) {
+      console.error("Error submitting quiz:", error);
+      res.status(400).json({ error: "Invalid data" });
     }
   },
   getCategories: async (req: RequestWithUserPayload, res: Response) => {
