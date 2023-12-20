@@ -1,6 +1,6 @@
 import { Database } from "sqlite3";
 import DatabaseSingleton from "../db/DatabaseSingleton";
-import { Category, Flashcard } from "../types/flashcardInterfaces";
+import { Category, Flashcard, Marathon } from "../types/flashcardInterfaces";
 import { User } from "../types/flashcardInterfaces";
 import { Quiz } from "../types/flashcardInterfaces";
 import { resolve } from "path";
@@ -66,7 +66,14 @@ export const deleteFlashcardById = async (id: string): Promise<void> => {
     });
   });
 };
-export const createQuizRecord = async (quizId: string, username: string, num_flashcards: number, start_time: Date, end_time: Date, category: string) => {
+export const createQuizRecord = async (
+  quizId: string,
+  username: string,
+  num_flashcards: number,
+  start_time: Date,
+  end_time: Date,
+  category: string
+) => {
   return new Promise<void>((resolve, reject) => {
     db.run(
       `INSERT INTO quizzes (id, username, start_date, end_date, category, flashcards) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -218,7 +225,10 @@ export const getCategories = async (username: string): Promise<Category[]> => {
   });
 };
 //categories
-export const checkCategoryExists = (username: string, category: string): Promise<boolean> => {
+export const checkCategoryExists = (
+  username: string,
+  category: string
+): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     db.get(
       "SELECT 1 FROM categories WHERE username = ? AND category = ? LIMIT 1",
@@ -234,14 +244,20 @@ export const checkCategoryExists = (username: string, category: string): Promise
   });
 };
 
-export const addCategory = async (username: string, category: string): Promise<void> => {
-  await db.run(
-    "INSERT INTO categories (category, username) VALUES (?, ?)",
-    [category, username]
-  );
+export const addCategory = async (
+  username: string,
+  category: string
+): Promise<void> => {
+  await db.run("INSERT INTO categories (category, username) VALUES (?, ?)", [
+    category,
+    username,
+  ]);
 };
 
-export const getCategoryRowCount = async (username: string, category: string): Promise<number> => {
+export const getCategoryRowCount = async (
+  username: string,
+  category: string
+): Promise<number> => {
   return new Promise<number>((resolve, reject) => {
     db.get(
       "SELECT COUNT(*) as count FROM flashcards WHERE username = ? AND category = ?",
@@ -257,7 +273,9 @@ export const getCategoryRowCount = async (username: string, category: string): P
   });
 };
 
-export const getCategoryByFlashcardId = async (flashcardId: string): Promise<string> => {
+export const getCategoryByFlashcardId = async (
+  flashcardId: string
+): Promise<string> => {
   return new Promise<string>((resolve, reject) => {
     db.get(
       "SELECT category FROM flashcards WHERE id = ?",
@@ -274,8 +292,10 @@ export const getCategoryByFlashcardId = async (flashcardId: string): Promise<str
   });
 };
 
-
-export const deleteCategory = async (username: string, category: string): Promise<void> => {
+export const deleteCategory = async (
+  username: string,
+  category: string
+): Promise<void> => {
   return new Promise((resolve, reject) => {
     db.run(
       "DELETE FROM categories WHERE username = ? AND category = ?",
@@ -293,16 +313,56 @@ export const deleteCategory = async (username: string, category: string): Promis
 
 export const updateFlashCards = async (flashcards: Flashcard[]) => {
   for (const flashcard of flashcards) {
-    const updatedFields: Partial<Flashcard> =
-    {
+    const updatedFields: Partial<Flashcard> = {
       username: flashcard.username,
       question: flashcard.question,
       answer: flashcard.answer,
       category: flashcard.category,
-      difficulty_level: flashcard.difficulty_level
+      difficulty_level: flashcard.difficulty_level,
     };
     await updateFlashcardbyId(flashcard.id, updatedFields);
   }
 };
 
+export const createMarathon = async (marathon: Marathon): Promise<void> => {
+  const {
+    id: id,
+    username: username,
+    category: category,
+    total_days: total_days,
+    current_day: current_day,
+  } = marathon;
+  return new Promise<void>((resolve, reject) => {
+    db.run(
+      "INSERT INTO marathons (id, username, category, total_days, current_day) VALUES (?, ?, ?, ?, ?)",
+      [id, username, category, total_days, current_day],
+      function (err) {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          console.log(`New marathon added with ID: ${this.lastID}`);
+          resolve();
+        }
+      }
+    );
+  });
+};
 
+export const getMarathons = async (
+  username: string | undefined
+): Promise<Marathon[]> => {
+  return new Promise<Marathon[]>((resolve, reject) => {
+    let query = "SELECT * FROM marathons WHERE username = ?";
+    const queryParams = [username];
+
+    db.all(query, queryParams, (err, rows: Marathon[]) => {
+      if (err) {
+        console.error(err);
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+};

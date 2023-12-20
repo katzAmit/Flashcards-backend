@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as flashcardService from "../services/flashcardService";
-import { Category, Flashcard } from "../types/flashcardInterfaces";
+import { Category, Flashcard, Marathon } from "../types/flashcardInterfaces";
 import { v4 as uuidv4 } from "uuid";
 import jwt from "jsonwebtoken";
 import { User } from "../types/flashcardInterfaces";
@@ -19,6 +19,8 @@ import {
   addCategory,
   createQuizRecord,
   updateFlashCards,
+  getMarathons,
+  createMarathon,
 } from "../services/flashcardService";
 export default {
   // flashcards
@@ -141,16 +143,23 @@ export default {
         const id = uuidv4();
         const username = req.user.username;
         const { flashcards, start_time, end_time } = req.body;
-        const allflashcards: Flashcard[] = flashcards
+        const allflashcards: Flashcard[] = flashcards;
         // Update flashcards and create quiz records
         await Promise.all([
           updateFlashCards(flashcards),
-          createQuizRecord(id, username, flashcards.length, start_time, end_time, allflashcards[0].category)
+          createQuizRecord(
+            id,
+            username,
+            flashcards.length,
+            start_time,
+            end_time,
+            allflashcards[0].category
+          ),
         ]);
 
-        res.status(200).json({ message: 'Quiz submitted successfully' });
+        res.status(200).json({ message: "Quiz submitted successfully" });
       } else {
-        res.status(401).json({ error: 'Unauthorized' });
+        res.status(401).json({ error: "Unauthorized" });
       }
     } catch (error) {
       console.error("Error submitting quiz:", error);
@@ -192,7 +201,7 @@ export default {
         const selectedIndices = new Set<number>();
         const selectedDifficultyLevels = new Set<string>();
 
-        const numFlashcards = selectedFlashcards.length
+        const numFlashcards = selectedFlashcards.length;
 
         while (selectedIndices.size < numFlashcards) {
           const randomIndex = Math.floor(
@@ -240,7 +249,7 @@ export default {
   },
 
   generateMarathon: async (req: RequestWithUserPayload, res: Response) => {
-    const { category, days } = req.body;
+    const { category, total_days } = req.body;
     const username = req.user?.username;
     type Quiz = {
       id: string;
@@ -252,14 +261,14 @@ export default {
 
     try {
       const Marathon: Quiz[] = [];
-      const MarathonIndices: number[][] = new Array(days).fill([]);
+      const MarathonIndices: number[][] = new Array(total_days).fill([]);
 
       const allFlashcardsInCategory = await getFlashcards(username, category);
       const usedMap: number[] = new Array(allFlashcardsInCategory.length).fill(
         0
       );
 
-      if (allFlashcardsInCategory.length < days) {
+      if (allFlashcardsInCategory.length < total_days) {
         // not enough for all days
         res.status(400).json({
           error: `Selected category doesn't have enough flashcards for a marathon.`,
@@ -267,10 +276,11 @@ export default {
         return;
       }
 
-      const numOfFlashcardsPerQuiz = allFlashcardsInCategory.length / days;
+      const numOfFlashcardsPerQuiz =
+        allFlashcardsInCategory.length / total_days;
 
       // divide the questions as indices
-      for (let i: number = 0; i < days; i += 1) {
+      for (let i: number = 0; i < total_days; i += 1) {
         for (let j: number = 0; j < numOfFlashcardsPerQuiz; j += 1) {
           let randomIndex: number = Math.floor(Math.random() * usedMap.length);
           while (usedMap[randomIndex] === 1) {
@@ -284,7 +294,7 @@ export default {
       }
 
       // map the indices to quizzes
-      for (let i = 0; i < days; i += 1) {
+      for (let i = 0; i < total_days; i += 1) {
         const curQuiz: Quiz = {
           id: `quiz${i + 1}`,
           title: `Quiz ${i + 1}`,
@@ -300,6 +310,49 @@ export default {
     } catch (error) {
       console.error("Error generating Marathon:", error);
       res.status(500).json({ error: "Failed to generate Marathon" });
+    }
+  },
+
+  getMarathons: async (req: RequestWithUserPayload, res: Response) => {
+    try {
+      const username = req.user?.username;
+
+      if (!username) {
+        return res
+          .status(500)
+          .json({ error: "Internal server error, user not found" });
+      }
+
+      const marathons: Marathon[] = await getMarathons(username);
+      res.json(marathons);
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
+
+  createMarathon: async (req: RequestWithUserPayload, res: Response) => {
+    try {
+      const { category, total_days } = req.body;
+      const id = uuidv4();
+      const username = req.user?.username;
+      const current_day = 1;
+      if (!username) {
+        return res
+          .status(500)
+          .json({ error: "Internal server error, user not found" });
+      }
+
+      const newMarathon: Marathon = {
+        id: id,
+        username: username,
+        category: category,
+        total_days: total_days,
+        current_day: current_day,
+      };
+      await createMarathon(newMarathon);
+      res.json(newMarathon);
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
     }
   },
 
