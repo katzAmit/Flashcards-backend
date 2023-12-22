@@ -33,16 +33,14 @@ class DatabaseSingleton {
     )`);
     DatabaseSingleton.instance?.run(
       `CREATE TABLE IF NOT EXISTS quizzes (
-      id TEXT,
+      quiz_id TEXT,
       flashcard_id TEXT,
       difficulty_level TEXT CHECK( difficulty_level IN ('Easy','Medium','Hard') ),
       username TEXT,
       start_date DATE,
       end_date DATE,
       category TEXT,
-      PRIMARY KEY (id, flashcard_id),
-      FOREIGN KEY (flashcard_id) REFERENCES flashcards(id)
-      
+      PRIMARY KEY (quiz_id, flashcard_id)
     )`,
       (initErr) => {
         if (initErr) {
@@ -91,8 +89,7 @@ class DatabaseSingleton {
         total_days INTEGER,
         start_date DATE,
         did_quiz INTEGER,
-        PRIMARY KEY (marathon_id, quiz_id), /* Composite primary key */
-        FOREIGN KEY (quiz_id) REFERENCES quizzes(id),
+        PRIMARY KEY (marathon_id, quiz_id),
         FOREIGN KEY (category) REFERENCES categories(category),
         FOREIGN KEY (username) REFERENCES users(username)
       )`,

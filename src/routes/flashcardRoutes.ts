@@ -21,10 +21,10 @@ router.get("/marathon", cardsController.getMarathons);
 
 router.get("/stats", cardsController.getStats);
 
-router.post("/marathon", cardsController.createMarathon);
+router.post("/marathon", cardsController.generateMarathon);
 
 router.post("/submit_quiz", cardsController.submitQuiz);
 
-router.post("/generate_marathon", cardsController.generateMarathon);
+router.post("/current_marathon_quiz", cardsController.getCurrentMarathonQuiz)
 
 export default router;

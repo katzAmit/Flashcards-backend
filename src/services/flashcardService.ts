@@ -1,6 +1,6 @@
 import { Database } from "sqlite3";
 import DatabaseSingleton from "../db/DatabaseSingleton";
-import { Category, Flashcard, Marathon } from "../types/flashcardInterfaces";
+import { Category, Flashcard, Marathon, MarathonRow } from "../types/flashcardInterfaces";
 import { User } from "../types/flashcardInterfaces";
 import { Quiz } from "../types/flashcardInterfaces";
 import { resolve } from "path";
@@ -71,24 +71,32 @@ export const createQuizRecord = async (
   flashcardId: string,
   username: string,
   difficulty_level: string,
-  start_time: Date,
-  end_time: Date,
-  category: string
+  category: string,
+  start_time?: Date, // Making start_time optional
+  end_time?: Date // Making end_time optional
 ) => {
   return new Promise<void>((resolve, reject) => {
-    db.run(
-      `INSERT INTO quizzes (id, flashcard_id, difficulty_level, username, start_date, end_date, category) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [quizId, flashcardId, difficulty_level, username, start_time, end_time, category],
-      (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
+    const values: any[] = [quizId, flashcardId, difficulty_level, username, category];
+
+    let query = `INSERT INTO quizzes (quiz_id, flashcard_id, difficulty_level, username, category) VALUES (?, ?, ?, ?, ?)`;
+
+    // Check for start_time and end_time presence
+    if (start_time && end_time) {
+      query = `INSERT INTO quizzes (quiz_id, flashcard_id, difficulty_level, username, start_date, end_date, category) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+      values.push(start_time, end_time);
+    }
+
+    db.run(query, values, (err) => {
+      if (err) {
+        reject(err);
+        console.log("THere was an ERRROR!!!", err)
+      } else {
+        resolve();
+        console.log("Success")
       }
-    );
+    });
   });
-}
+};
 
 export const getFlashcards = async (
   username: string | undefined,
@@ -121,8 +129,8 @@ export const getFlashcards = async (
 };
 export const getFlashcardbyId = async (
   id: string
-): Promise<Flashcard | null> => {
-  return new Promise<Flashcard | null>((resolve, reject) => {
+): Promise<Flashcard> => {
+  return new Promise<Flashcard>((resolve, reject) => {
     db.get(
       "SELECT * FROM flashcards WHERE id = ?",
       [id],
@@ -325,49 +333,50 @@ export const updateFlashCards = async (flashcards: Flashcard[]) => {
   }
 };
 
-export const createMarathon = async (marathon: Marathon): Promise<void> => {
-  const {
-    id: id,
-    username: username,
-    category: category,
-    total_days: total_days,
-    current_day: current_day,
-  } = marathon;
-  return new Promise<void>((resolve, reject) => {
-    db.run(
-      "INSERT INTO marathons (id, username, category, total_days, current_day) VALUES (?, ?, ?, ?, ?)",
-      [id, username, category, total_days, current_day],
-      function (err) {
-        if (err) {
-          console.error(err);
-          reject(err);
-        } else {
-          console.log(`New marathon added with ID: ${this.lastID}`);
-          resolve();
-        }
-      }
-    );
-  });
-};
-
-export const getMarathons = async (
-  username: string | undefined
-): Promise<Marathon[]> => {
+export const getMarathons = async (username: string | undefined): Promise<Marathon[]> => {
   return new Promise<Marathon[]>((resolve, reject) => {
-    let query = "SELECT * FROM marathons WHERE username = ?";
+    if (!username) {
+      reject(new Error("Invalid username"));
+      return;
+    }
+
+    const query = "SELECT * FROM marathons WHERE username = ?";
     const queryParams = [username];
 
-    db.all(query, queryParams, (err, rows: Marathon[]) => {
+    db.all(query, queryParams, (err, rows: MarathonRow[]) => {
       if (err) {
         console.error(err);
         reject(err);
       } else {
-        resolve(rows);
+        const marathonsMap: Map<string, Marathon> = new Map();
+        rows.forEach(row => {
+          const { marathon_id, quiz_id, username, total_days, current_day, start_date, category } = row;
+
+          if (!marathonsMap.has(marathon_id)) {
+            marathonsMap.set(marathon_id, {
+              marathon_id,
+              quizzes: [],
+              username,
+              total_days,
+              current_day,
+              start_date,
+              category
+            });
+          }
+
+          const marathon = marathonsMap.get(marathon_id);
+
+          if (marathon) {
+            marathon.quizzes.push(quiz_id);
+          }
+        });
+
+        const marathons: Marathon[] = Array.from(marathonsMap.values());
+        resolve(marathons);
       }
     });
   });
 };
-
 
 export const getStats1 = async (username: string | undefined): Promise<string> => {
   return new Promise<string>((resolve, reject) => {
@@ -450,3 +459,117 @@ export const getStats5 = async (username: string | undefined):
 
   });
 };
+export const createMarathonRecord = async (
+  marathonId: string,
+  quizId: string,
+  username: string,
+  category: string,
+  currentDay: number,
+  totalDays: number,
+  startDate: Date
+) => {
+  return new Promise<void>((resolve, reject) => {
+    db.run(
+      `INSERT INTO marathons (marathon_id, quiz_id, username, category, current_day, total_days, start_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [marathonId, quizId, username, category, currentDay, totalDays, startDate.toISOString()],
+      (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      }
+    );
+  });
+};
+export const getMarathonStartDate = async (marathon_id: string): Promise<string> => {
+  return new Promise<string>((resolve, reject) => {
+    db.get(
+      "SELECT start_date FROM marathons WHERE marathon_id = ?",
+      [marathon_id],
+      (err, row: any) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          if (row && row.start_date) {
+            resolve(row.start_date);
+          }
+        }
+      }
+    );
+  });
+}
+export const getQuizIdByCurrentDay = async (marathon_id: string, current_day: number): Promise<string> => {
+  return new Promise<string>((resolve, reject) => {
+    db.get(
+      "SELECT quiz_id FROM marathons WHERE marathon_id = ? AND current_day = ?",
+      [marathon_id, current_day],
+      (err, row: { quiz_id: string }) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          if (row && row.quiz_id) {
+            resolve(row.quiz_id);
+          }
+        }
+      }
+    );
+  });
+}
+export const getFlashcardIdsByQuizId = async (quiz_id: string): Promise<string[]> => {
+  {
+    return new Promise<string[]>((resolve, reject) => {
+      let query = "SELECT flashcard_id FROM quizzes WHERE quiz_id = ?";
+      const queryParams = [quiz_id];
+      db.all(query, queryParams, (err, rows: { flashcard_id: string }[]) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          resolve(rows.map(row => row.flashcard_id));
+        }
+      });
+    });
+  };
+};
+
+export const getCurrentMarathonQuiz = async (marathon_id: string) => {
+  try {
+    const marathonStartDate: string = await getMarathonStartDate(marathon_id);
+    const marathonDate: Date = new Date(marathonStartDate)
+    const today = new Date();
+    const timeDiff = Math.abs(today.getTime() - marathonDate.getTime());
+    const currentDay: number = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    const quizId: string = await getQuizIdByCurrentDay(marathon_id, currentDay);
+    const flashcardIds: string[] = await getFlashcardIdsByQuizId(quizId)
+    console.log("Flashcards ARE!", flashcardIds)
+    const flashcardPromises = flashcardIds.map((flashcard_id) => getFlashcardbyId(flashcard_id));
+    const flashcards: Flashcard[] = await Promise.all(flashcardPromises);
+    return { id: quizId, flashcards: flashcards }
+  } catch (e) {
+    console.error(e);
+  }
+};
+//   const flashcardIdsQuery = "SELECT flashcard_id FROM quizzes WHERE id = ?";
+//   const flashcardIdsResult = await db.all(flashcardIdsQuery, [currentQuizId]);
+//   const flashcardIds = flashcardIdsResult.map((result: any) => result.flashcard_id);
+
+//   const flashcardsQuery = "SELECT * FROM flashcards WHERE id IN (?)";
+//   const flashcardsResult = await db.all(flashcardsQuery, [flashcardIds.join(",")]);
+
+//   const quiz: Quiz = {
+//     id: currentQuizId,
+//     flashcards: flashcardsResult,
+//     start_time: marathonStartDate,
+//     end_time: null,
+//   };
+
+//   return Promise.resolve(quiz);
+// } catch (error) {
+//   throw new Error("Internal server error");
+// }
+
+
