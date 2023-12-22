@@ -21,5 +21,8 @@ router.get("/marathon", cardsController.getMarathons);
 
 router.post("/marathon", cardsController.createMarathon);
 
-router.post('/submit_quiz', cardsController.submitQuiz)
+router.post("/submit_quiz", cardsController.submitQuiz);
+
+router.post("/generate_marathon", cardsController.generateMarathon);
+
 export default router;

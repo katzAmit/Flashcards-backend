@@ -261,7 +261,10 @@ export default {
 
     try {
       const Marathon: Quiz[] = [];
-      const MarathonIndices: number[][] = new Array(total_days).fill([]);
+      const MarathonIndices: number[][] = new Array(total_days);
+      for (let i: number = 0; i < total_days; i += 1) {
+        MarathonIndices[i] = [0];
+      }
 
       const allFlashcardsInCategory = await getFlashcards(username, category);
       const usedMap: number[] = new Array(allFlashcardsInCategory.length).fill(
@@ -283,11 +286,12 @@ export default {
       for (let i: number = 0; i < total_days; i += 1) {
         for (let j: number = 0; j < numOfFlashcardsPerQuiz; j += 1) {
           let randomIndex: number = Math.floor(Math.random() * usedMap.length);
+
+          // Ensure the generated index is unique
           while (usedMap[randomIndex] === 1) {
-            let randomIndex: number = Math.floor(
-              Math.random() * usedMap.length
-            );
+            randomIndex = Math.floor(Math.random() * usedMap.length);
           }
+
           usedMap[randomIndex] = 1;
           MarathonIndices[i][j] = randomIndex;
         }
