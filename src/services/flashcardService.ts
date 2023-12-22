@@ -68,29 +68,27 @@ export const deleteFlashcardById = async (id: string): Promise<void> => {
 };
 export const createQuizRecord = async (
   quizId: string,
+  flashcardId: string,
   username: string,
-  num_flashcards: number,
-  num_greens: number,
-  num_yellows: number,
-  num_reds: number,
+  difficulty_level: string,
   start_time: Date,
   end_time: Date,
   category: string
 ) => {
   return new Promise<void>((resolve, reject) => {
     db.run(
-      `INSERT INTO quizzes (id, username, start_date, end_date, category, flashcards, greens, yellows, reds) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [quizId, username, start_time, end_time, category, num_flashcards, num_greens, num_yellows, num_reds],
+      `INSERT INTO quizzes (id, flashcard_id, difficulty_level, username, start_date, end_date, category) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [quizId, flashcardId, difficulty_level, username, start_time, end_time, category],
       (err) => {
         if (err) {
-          reject();
+          reject(err);
         } else {
           resolve();
         }
       }
     );
   });
-};
+}
 
 export const getFlashcards = async (
   username: string | undefined,
@@ -372,14 +370,14 @@ export const getMarathons = async (
 
 
 export const getStats1 = async (username: string | undefined):
-Promise<string> => {
+  Promise<string> => {
   return new Promise<string>((resolve, reject) => {
-    const queryMorning = 
-    "SELECT *, greens * 1.0 / flashcards AS ratio FROM quizzes WHERE username = ? AND strftime('%H:%M', end_date) BETWEEN '08:00' AND '15:59'";
-    const queryAfternoon = 
-    "SELECT *, greens * 1.0 / flashcards AS ratio FROM quizzes WHERE username = ? AND strftime('%H:%M', end_date) BETWEEN '16:00' AND '23:59'";
-    const queryNight = 
-    "SELECT *, greens * 1.0 / flashcards AS ratio FROM quizzes WHERE username = ? AND strftime('%H:%M', end_date) BETWEEN '00:00' AND '07:59'";
+    const queryMorning =
+      "SELECT *, greens * 1.0 / flashcards AS ratio FROM quizzes WHERE username = ? AND strftime('%H:%M', end_date) BETWEEN '08:00' AND '15:59'";
+    const queryAfternoon =
+      "SELECT *, greens * 1.0 / flashcards AS ratio FROM quizzes WHERE username = ? AND strftime('%H:%M', end_date) BETWEEN '16:00' AND '23:59'";
+    const queryNight =
+      "SELECT *, greens * 1.0 / flashcards AS ratio FROM quizzes WHERE username = ? AND strftime('%H:%M', end_date) BETWEEN '00:00' AND '07:59'";
 
     const getRatio = (query: string, params: any[]): Promise<number> => {
       return new Promise<number>((resolve, reject) => {
@@ -420,16 +418,16 @@ Promise<string> => {
 };
 
 export const getStats2 = async (username: string | undefined):
-Promise<string> => { return ""};
+  Promise<string> => { return "" };
 
 export const getStats3 = async (username: string | undefined):
-Promise<string> => { return ""};
+  Promise<string> => { return "" };
 
 export const getStats4 = async (username: string | undefined):
-Promise<string> => { return ""};
+  Promise<string> => { return "" };
 
 export const getStats5 = async (username: string | undefined):
-Promise<string> => {
+  Promise<string> => {
   return new Promise<string>((resolve, reject) => {
 
     const query = `
@@ -448,7 +446,7 @@ Promise<string> => {
       if (err) {
         reject(err);
       } else {
-        resolve(row ? `${row} min`  : "0 min"); 
+        resolve(row ? `${row} min` : "0 min");
       }
     });
 

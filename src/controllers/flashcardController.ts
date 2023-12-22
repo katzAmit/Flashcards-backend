@@ -143,22 +143,25 @@ export default {
         const id = uuidv4();
         const username = req.user.username;
         const { flashcards, start_time, end_time } = req.body;
-        const allflashcards: Flashcard[] = flashcards;
-        // Update flashcards and create quiz records
-        await Promise.all([
-          updateFlashCards(flashcards),
-          createQuizRecord(
-            id,
-            username,
-            flashcards.length,
-            allflashcards.filter(flashcard => flashcard.difficulty_level === 'Easy').length,
-            allflashcards.filter(flashcard => flashcard.difficulty_level === 'Medium').length,
-            allflashcards.filter(flashcard => flashcard.difficulty_level === 'Hard').length,
-            start_time,
-            end_time,
-            allflashcards[0].category
-          ),
-        ]);
+
+        const updateFlashcardsPromise = updateFlashCards(flashcards);
+
+        const createQuizzesPromise = Promise.all(
+          flashcards.map(async (flashcard: Flashcard) => {
+            const { id: flashcardId, difficulty_level, category } = flashcard;
+            await createQuizRecord(
+              id,
+              flashcardId,
+              username,
+              difficulty_level,
+              start_time,
+              end_time,
+              category
+            );
+          })
+        );
+
+        await Promise.all([updateFlashcardsPromise, createQuizzesPromise]);
 
         res.status(200).json({ message: "Quiz submitted successfully" });
       } else {
@@ -199,7 +202,7 @@ export default {
       stats.push(stat);
       res.status(200).json(stats);
 
-    } catch(error) {
+    } catch (error) {
       console.error("Error generating stats:", error);
       res.status(500).json({ error: "Failed to generate stats" });
     }

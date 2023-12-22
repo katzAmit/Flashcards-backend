@@ -3,7 +3,7 @@ import sqlite3 from "sqlite3";
 class DatabaseSingleton {
   private static instance: sqlite3.Database | null = null;
 
-  private constructor() {} // Prevents external instantiation
+  private constructor() { } // Prevents external instantiation
 
   static getInstance(): sqlite3.Database {
     if (!DatabaseSingleton.instance) {
@@ -33,15 +33,16 @@ class DatabaseSingleton {
     )`);
     DatabaseSingleton.instance?.run(
       `CREATE TABLE IF NOT EXISTS quizzes (
-      id TEXT PRIMARY KEY,
+      id TEXT,
+      flashcard_id TEXT,
+      difficulty_level TEXT CHECK( difficulty_level IN ('Easy','Medium','Hard') ),
       username TEXT,
       start_date DATE,
       end_date DATE,
       category TEXT,
-      flashcards INTEGER
-      greens INTEGER
-      yellows INTEGER
-      reds INTEGER
+      PRIMARY KEY (id, flashcard_id),
+      FOREIGN KEY (flashcard_id) REFERENCES flashcards(id)
+      
     )`,
       (initErr) => {
         if (initErr) {
@@ -82,11 +83,16 @@ class DatabaseSingleton {
 
     DatabaseSingleton.instance?.run(
       `CREATE TABLE IF NOT EXISTS marathons (
-        id TEXT PRIMARY KEY,
+        marathon_id TEXT,
+        quiz_id TEXT,
         username TEXT,
         category TEXT,
-        total_days INTEGER,
         current_day INTEGER,
+        total_days INTEGER,
+        start_date DATE,
+        did_quiz INTEGER,
+        PRIMARY KEY (marathon_id, quiz_id), /* Composite primary key */
+        FOREIGN KEY (quiz_id) REFERENCES quizzes(id),
         FOREIGN KEY (category) REFERENCES categories(category),
         FOREIGN KEY (username) REFERENCES users(username)
       )`,
@@ -94,7 +100,7 @@ class DatabaseSingleton {
         if (initErr) {
           console.error("Error initializing marathons table:", initErr.message);
         } else {
-          console.log("marathons tables initialized.");
+          console.log("marathons table initialized.");
         }
       }
     );
@@ -154,7 +160,6 @@ class DatabaseSingleton {
       );
       DatabaseSingleton.insertCategories();
       DatabaseSingleton.insertFlashcards();
-      DatabaseSingleton.insertMarathons();
     });
   }
 
@@ -353,65 +358,6 @@ class DatabaseSingleton {
             console.error("Error inserting flashcard:", err.message);
           } else {
             console.log("Flashcard inserted successfully.");
-          }
-        }
-      );
-    });
-  }
-  private static insertMarathons() {
-    const marathons = [
-      {
-        id: 1,
-        username: "dyu@post.bgu.ac.il",
-        category: "Dynamic Programming",
-        total_days: 10,
-        current_day: 5,
-      },
-      {
-        id: 2,
-        username: "dyu@post.bgu.ac.il",
-        category: "wassup",
-        total_days: 15,
-        current_day: 7,
-      },
-      {
-        id: 3,
-        username: "dyu@post.bgu.ac.il",
-        category: "Knapsack Problem",
-        total_days: 12,
-        current_day: 3,
-      },
-      {
-        id: 4,
-        username: "dyu@post.bgu.ac.il",
-        category: "Graph Algorithms",
-        total_days: 20,
-        current_day: 12,
-      },
-      {
-        id: 5,
-        username: "dyu@post.bgu.ac.il",
-        category: "Data Structures",
-        total_days: 8,
-        current_day: 2,
-      },
-    ];
-
-    marathons.forEach((marathon) => {
-      DatabaseSingleton.instance?.run(
-        `INSERT INTO marathons (id, username, category, total_days, current_day) VALUES (?, ?, ?, ?, ?)`,
-        [
-          marathon.id,
-          marathon.username,
-          marathon.category,
-          marathon.total_days,
-          marathon.current_day,
-        ],
-        (err) => {
-          if (err) {
-            console.error("Error inserting marathon:", err.message);
-          } else {
-            console.log("Marathon inserted successfully:", marathon.category);
           }
         }
       );
