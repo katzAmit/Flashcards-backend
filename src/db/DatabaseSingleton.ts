@@ -39,6 +39,9 @@ class DatabaseSingleton {
       end_date DATE,
       category TEXT,
       flashcards INTEGER
+      greens INTEGER
+      yellows INTEGER
+      reds INTEGER
     )`,
       (initErr) => {
         if (initErr) {
