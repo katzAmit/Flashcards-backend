@@ -369,42 +369,40 @@ export const getMarathons = async (
 };
 
 
-export const getStats1 = async (username: string | undefined):
-  Promise<string> => {
+export const getStats1 = async (username: string | undefined): Promise<string> => {
   return new Promise<string>((resolve, reject) => {
     const queryMorning =
-      "SELECT *, greens * 1.0 / flashcards AS ratio FROM quizzes WHERE username = ? AND strftime('%H:%M', end_date) BETWEEN '08:00' AND '15:59'";
+      "SELECT COUNT(*) AS count FROM quizzes WHERE username = ? AND difficulty_level = 'Easy' AND strftime('%H:%M', end_date) BETWEEN '08:00' AND '15:59'";
     const queryAfternoon =
-      "SELECT *, greens * 1.0 / flashcards AS ratio FROM quizzes WHERE username = ? AND strftime('%H:%M', end_date) BETWEEN '16:00' AND '23:59'";
+      "SELECT COUNT(*) AS count FROM quizzes WHERE username = ? AND difficulty_level = 'Easy' AND strftime('%H:%M', end_date) BETWEEN '16:00' AND '23:59'";
     const queryNight =
-      "SELECT *, greens * 1.0 / flashcards AS ratio FROM quizzes WHERE username = ? AND strftime('%H:%M', end_date) BETWEEN '00:00' AND '07:59'";
+      "SELECT COUNT(*) AS count FROM quizzes WHERE username = ? AND difficulty_level = 'Easy' AND (strftime('%H:%M', end_date) BETWEEN '00:00' AND '07:59' OR strftime('%H:%M', end_date) >= '00:00' AND strftime('%H:%M', end_date) <= '08:00')";
 
-    const getRatio = (query: string, params: any[]): Promise<number> => {
+    const getQuizCount = (query: string, params: any[]): Promise<number> => {
       return new Promise<number>((resolve, reject) => {
-        db.get(query, params, (err, row: { ratio?: number }) => {
+        db.get(query, params, (err, row: { count?: number }) => {
           if (err) {
             reject(err);
           } else {
-            resolve(row ? row.ratio || 0 : 0); // Return the ratio or 0 if no matching row
-            console.log(row);
+            resolve(row ? row.count || 0 : 0); // Return the count or 0 if no matching row
           }
         });
       });
     };
 
     Promise.all([
-      getRatio(queryMorning, [username]),
-      getRatio(queryAfternoon, [username]),
-      getRatio(queryNight, [username]),
+      getQuizCount(queryMorning, [username]),
+      getQuizCount(queryAfternoon, [username]),
+      getQuizCount(queryNight, [username]),
     ])
-      .then((ratios) => {
-        // Determine the period with the highest ratio
-        const maxRatio = Math.max(...ratios);
-        const maxIndex = ratios.indexOf(maxRatio);
+      .then((counts) => {
+        // Determine the period with the highest count
+        const maxCount = Math.max(...counts);
+        const maxIndex = counts.indexOf(maxCount);
 
         // Resolve with the corresponding period
         if (maxIndex === 0) {
-          resolve('this works');
+          resolve('08:00-16:00');
         } else if (maxIndex === 1) {
           resolve('16:00-00:00');
         } else {
@@ -413,7 +411,7 @@ export const getStats1 = async (username: string | undefined):
       })
       .catch((error) => {
         reject(error);
-      })
+      });
   });
 };
 

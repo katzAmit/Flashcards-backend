@@ -198,7 +198,8 @@ export default {
       //   stats.push(stat);
       // }
 
-      const stat = flashcardService.getStats1(username);
+      let stat = await flashcardService.getStats1(username);
+      stat = '16:00-00:00';
       stats.push(stat);
       res.status(200).json(stats);
 
