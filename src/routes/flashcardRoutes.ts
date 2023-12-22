@@ -19,6 +19,8 @@ router.get("/categories", cardsController.getCategories);
 
 router.get("/marathon", cardsController.getMarathons);
 
+router.get("/stats", cardsController.getStats);
+
 router.post("/marathon", cardsController.createMarathon);
 
 router.post('/submit_quiz', cardsController.submitQuiz)

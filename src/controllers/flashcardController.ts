@@ -151,6 +151,9 @@ export default {
             id,
             username,
             flashcards.length,
+            allflashcards.filter(flashcard => flashcard.difficulty_level === 'Easy').length,
+            allflashcards.filter(flashcard => flashcard.difficulty_level === 'Medium').length,
+            allflashcards.filter(flashcard => flashcard.difficulty_level === 'Hard').length,
             start_time,
             end_time,
             allflashcards[0].category
@@ -180,6 +183,29 @@ export default {
       res.status(500).json({ error: "Internal server error" });
     }
   },
+
+  getStats: async (req: RequestWithUserPayload, res: Response) => {
+    const username = req.user?.username;
+    try {
+      const stats = [];
+
+      // for (let i = 1; i < 6; i++) {
+      //   const functionName = `getStats${i}`;
+      //   const stat = await flashcardService.(window as any)[functionName](username);
+      //   stats.push(stat);
+      // }
+
+      const stat = flashcardService.getStats1(username);
+      stats.push(stat);
+      res.status(200).json(stats);
+
+    } catch(error) {
+      console.error("Error generating stats:", error);
+      res.status(500).json({ error: "Failed to generate stats" });
+    }
+
+  },
+
   // quizzes
   getQuizzes: async (req: RequestWithUserPayload, res: Response) => {
     const { categories } = req.body;
