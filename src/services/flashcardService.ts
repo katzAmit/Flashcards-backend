@@ -93,7 +93,7 @@ export const createQuizRecord = async (
 
     // Check for start_time and end_time presence
     if (start_time && end_time) {
-      query = `INSERT INTO quizzes (quiz_id, flashcard_id, difficulty_level, username, start_date, end_date, category) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+      query = `INSERT INTO quizzes (quiz_id, flashcard_id, difficulty_level, username, category, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?)`;
       values.push(start_time, end_time);
     }
 
@@ -373,22 +373,20 @@ export const getMarathons = async (
           } = row;
 
           if (!marathonsMap.has(marathon_id)) {
+            const marathonDate: Date = new Date(start_date);
+            const today = new Date();
+            const timeDiff = Math.abs(today.getTime() - marathonDate.getTime());
+            const currentDay: number = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
             marathonsMap.set(marathon_id, {
               marathon_id,
               quizzes: [],
               username,
               total_days,
-              current_day,
+              current_day: currentDay,
               start_date,
               category,
               did_quiz,
             });
-          }
-
-          const marathon = marathonsMap.get(marathon_id);
-
-          if (marathon) {
-            marathon.quizzes.push(quiz_id);
           }
         });
 
@@ -672,21 +670,4 @@ export const getMarathonById = async (
     });
   });
 };
-//   const flashcardIdsQuery = "SELECT flashcard_id FROM quizzes WHERE id = ?";
-//   const flashcardIdsResult = await db.all(flashcardIdsQuery, [currentQuizId]);
-//   const flashcardIds = flashcardIdsResult.map((result: any) => result.flashcard_id);
 
-//   const flashcardsQuery = "SELECT * FROM flashcards WHERE id IN (?)";
-//   const flashcardsResult = await db.all(flashcardsQuery, [flashcardIds.join(",")]);
-
-//   const quiz: Quiz = {
-//     id: currentQuizId,
-//     flashcards: flashcardsResult,
-//     start_time: marathonStartDate,
-//     end_time: null,
-//   };
-
-//   return Promise.resolve(quiz);
-// } catch (error) {
-//   throw new Error("Internal server error");
-// }

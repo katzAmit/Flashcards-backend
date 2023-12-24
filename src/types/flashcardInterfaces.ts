@@ -44,7 +44,7 @@ export type Marathon = {
   category: Category;
   total_days: number;
   current_day: number;
-  start_date: Date;
+  start_date: string;
   did_quiz: number;
 };
 export type MarathonRow = {
@@ -53,7 +53,7 @@ export type MarathonRow = {
   username: string;
   total_days: number;
   current_day: number;
-  start_date: Date;
+  start_date: string;
   category: Category;
   did_quiz: number;
 };

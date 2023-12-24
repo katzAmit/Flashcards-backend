@@ -395,6 +395,7 @@ export default {
       }
 
       const marathons: Marathon[] = await getMarathons(username);
+
       res.json(marathons);
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
