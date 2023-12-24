@@ -198,10 +198,18 @@ export default {
       //   stats.push(stat);
       // }
 
-      let stat = await flashcardService.getStats1(username);
-      stat = '16:00-00:00';
-      stats.push(stat);
+      let stat1 = await flashcardService.getStats1(username);
+      stats.push(stat1);
+      let stat2 = await flashcardService.getStats2(username);
+      stats.push(stat2);
+      let stat3 = await flashcardService.getStats3(username);
+      stats.push(stat3);
+      let stat4 = await flashcardService.getStats4(username);
+      stats.push(stat4);
+      let stat5 = await flashcardService.getStats5(username);
+      stats.push(stat5);
       res.status(200).json(stats);
+
 
     } catch (error) {
       console.error("Error generating stats:", error);

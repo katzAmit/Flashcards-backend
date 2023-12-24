@@ -416,7 +416,39 @@ export const getStats1 = async (username: string | undefined): Promise<string> =
 };
 
 export const getStats2 = async (username: string | undefined):
-  Promise<string> => { return "" };
+Promise<{ category: string; questions: number }[]> => { 
+  const query = `
+    SELECT
+      category,
+      COUNT(*) AS questions
+    FROM
+      flashcards
+    WHERE
+      difficulty_level = 'Easy'
+    GROUP BY
+      category;
+  `;
+  
+  return new Promise<{ category: string; questions: number }[]>((resolve, reject) => {
+    db.all(query, (err, rows: { category: string , questions: number }[]) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      // const result = rows.map((row) => ({
+      //   x: row.category || "Unknown", // Use a default value if category is undefined
+      //   y: row.easyCount,
+      // }));
+      if(rows.length!= 0){
+        resolve(rows);
+      }
+      else
+      resolve([]);
+     
+    });
+  });
+
+};
 
 export const getStats3 = async (username: string | undefined):
   Promise<string> => { return "" };
@@ -430,21 +462,34 @@ export const getStats5 = async (username: string | undefined):
 
     const query = `
     SELECT
-    ROUND(SUM(totalDurationInMinutes), 0) AS totalSumDurationInMinutes,
-    COUNT(*) AS totalQuizzes,
-    ROUND(SUM(totalDurationInMinutes) / COUNT(*), 2) AS averageDurationInMinutes
-    FROM (
-    SELECT ROUND(SUM((strftime('%s', end_date) - strftime('%s', start_date)) / 60), 0) AS totalDurationInMinutes
-    FROM quizzes
-    WHERE username = ?
-    )
-    `;
+  COUNT(DISTINCT id) AS numberOfQuizzes,
+  CASE
+    WHEN COUNT(DISTINCT id) > 0 THEN
+      ROUND(SUM((CAST(strftime('%s', end_date) AS REAL) - CAST(strftime('%s', start_date) AS REAL)) / 60) / COUNT(DISTINCT id))
+    ELSE
+      0
+  END AS averageTimePerQuiz
+FROM quizzes;
+  `;
 
-    db.get(query, (err, row: { ratio?: number }) => {
+    db.get(query, (err, row: {numberOfQuizzes?: number, averageTimePerQuiz?: number }) => {
       if (err) {
         reject(err);
       } else {
-        resolve(row ? `${row} min` : "0 min");
+        if (row) {
+          const numberOfQuizzes = row.numberOfQuizzes || 0;
+          const averageTimePerQuiz = row.averageTimePerQuiz || 0;
+  
+          // Access the results
+          if (numberOfQuizzes > 0) {
+            resolve(`${averageTimePerQuiz} min`);
+          } else {
+            resolve("0 min");
+          }
+        } else {
+          reject(err);
+        }
+        
       }
     });
 
