@@ -629,7 +629,9 @@ export const getCurrentMarathonQuiz = async (marathon_id: string) => {
       getFlashcardbyId(flashcard_id)
     );
     const flashcards: Flashcard[] = await Promise.all(flashcardPromises);
-    return { id: quizId, flashcards: flashcards };
+    const theMarathon = await getMarathonById(marathon_id, quizId);
+    const did_quiz = theMarathon?.did_quiz;
+    return { id: quizId, flashcards: flashcards, did_quiz: did_quiz };
   } catch (e) {
     console.error(e);
   }
