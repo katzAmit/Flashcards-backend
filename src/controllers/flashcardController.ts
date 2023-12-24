@@ -22,6 +22,8 @@ import {
   getMarathons,
   createMarathonRecord,
   getCurrentMarathonQuiz,
+  getMarathonById,
+  updateMarathonbyId,
 } from "../services/flashcardService";
 export default {
   // flashcards
@@ -143,7 +145,14 @@ export default {
       if (req.user) {
         const id = uuidv4();
         const username = req.user.username;
-        const { flashcards, start_time, end_time } = req.body;
+        const {
+          flashcards,
+          quiz_id,
+          start_time,
+          end_time,
+          marathon_or_practice,
+          marathon_id,
+        } = req.body;
 
         const updateFlashcardsPromise = updateFlashCards(flashcards);
 
@@ -157,11 +166,30 @@ export default {
               difficulty_level,
               category,
               start_time,
-              end_time,
-
+              end_time
             );
           })
         );
+
+        if (marathon_or_practice === "marathon") {
+          // Retrieve the existing marathon
+          const existingMarathon = await getMarathonById(marathon_id, quiz_id);
+
+          if (existingMarathon) {
+            // Update the did_quiz field for the existing marathon
+            await updateMarathonbyId(
+              existingMarathon.marathon_id,
+              existingMarathon.quiz_id,
+              {
+                did_quiz: 1,
+                // Add other fields as needed for your updateMarathon function
+              }
+            );
+          } else {
+            // Handle the case where the marathon does not exist
+            console.error("Marathon not found for update.");
+          }
+        }
 
         await Promise.all([updateFlashcardsPromise, createQuizzesPromise]);
 
@@ -174,6 +202,7 @@ export default {
       res.status(400).json({ error: "Invalid data" });
     }
   },
+
   getCategories: async (req: RequestWithUserPayload, res: Response) => {
     try {
       const username = req.user?.username;
@@ -201,15 +230,13 @@ export default {
       // }
 
       let stat = await flashcardService.getStats1(username);
-      stat = '16:00-00:00';
+      stat = "16:00-00:00";
       stats.push(stat);
       res.status(200).json(stats);
-
     } catch (error) {
       console.error("Error generating stats:", error);
       res.status(500).json({ error: "Failed to generate stats" });
     }
-
   },
 
   // quizzes
@@ -305,14 +332,22 @@ export default {
         };
 
         const allFlashcardsInCategory = await getFlashcards(username, category);
-        const usedMap: number[] = new Array(allFlashcardsInCategory.length).fill(0);
-        const numOfFlashcardsPerQuiz = Math.floor(allFlashcardsInCategory.length / total_days);
+        const usedMap: number[] = new Array(
+          allFlashcardsInCategory.length
+        ).fill(0);
+        const numOfFlashcardsPerQuiz = Math.floor(
+          allFlashcardsInCategory.length / total_days
+        );
 
         for (let j = 0; j < numOfFlashcardsPerQuiz; j++) {
-          let randomIndex = Math.floor(Math.random() * allFlashcardsInCategory.length);
+          let randomIndex = Math.floor(
+            Math.random() * allFlashcardsInCategory.length
+          );
 
           while (usedMap[randomIndex] === 1) {
-            randomIndex = Math.floor(Math.random() * allFlashcardsInCategory.length);
+            randomIndex = Math.floor(
+              Math.random() * allFlashcardsInCategory.length
+            );
           }
 
           usedMap[randomIndex] = 1;
@@ -337,7 +372,8 @@ export default {
           category,
           i, // Current day starting from 0
           total_days,
-          startDate // Start date for the marathon
+          startDate, // Start date for the marathon
+          0
         );
       }
 
@@ -406,15 +442,17 @@ export default {
       res.status(400).json({ error: "User already exists" });
     }
   },
-  getCurrentMarathonQuiz: async (req: RequestWithUserPayload, res: Response) => {
+  getCurrentMarathonQuiz: async (
+    req: RequestWithUserPayload,
+    res: Response
+  ) => {
     try {
       const { marathon_id } = req.body; // Extract marathon ID from the request body
       const quiz = await getCurrentMarathonQuiz(marathon_id);
       res.status(200).json(quiz); // Send the retrieved quiz as the response
     } catch (error) {
-      console.error('Error fetching current marathon quiz:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      console.error("Error fetching current marathon quiz:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   },
-
 };

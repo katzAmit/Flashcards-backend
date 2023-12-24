@@ -38,21 +38,22 @@ export type FilterCriteria = {
 };
 
 export type Marathon = {
-  marathon_id: string,
-  quizzes: string[],
-  username: string,
-  category: Category,
-  total_days: number,
-  current_day: number,
-  start_date: Date
+  marathon_id: string;
+  quizzes: string[];
+  username: string;
+  category: Category;
+  total_days: number;
+  current_day: number;
+  start_date: Date;
+  did_quiz: number;
 };
 export type MarathonRow = {
-  marathon_id: string,
-  quiz_id: string,
-  username: string,
-  total_days: number,
-  current_day: number,
-  start_date: Date,
-  category: Category,
-  did_quiz: number
-}
+  marathon_id: string;
+  quiz_id: string;
+  username: string;
+  total_days: number;
+  current_day: number;
+  start_date: Date;
+  category: Category;
+  did_quiz: number;
+};
