@@ -513,15 +513,84 @@ Promise<{ category: string; questions: number }[]> => {
 
 export const getStats3 = async (
   username: string | undefined
-): Promise<string> => {
-  return "";
+): Promise<{ x: number; y: number }[]> => {
+  return new Promise<{ x: number; y: number }[]>((resolve, reject) => {
+    const query = `
+      SELECT
+        difficulty_level,
+        COUNT(DISTINCT question) AS questionCount
+      FROM
+        flashcards
+      WHERE
+        username = ?
+      GROUP BY
+        difficulty_level;
+    `;
+
+    db.all(query, [username], (err, rows: { difficulty_level?: string; questionCount?: number }[]) => {
+      if (err) {
+        reject(err);
+      } else {
+        // Ensure the array length is exactly 3
+        const result = Array.from({ length: 3 }, (_, index) => {
+          const difficultyLevel = getDifficultyLevelByIndex(index);
+          const row = rows.find((r) => r.difficulty_level === difficultyLevel);
+          return {
+            x: row ? row.questionCount || 0 : 0,
+            y: row ? row.questionCount || 0 : 0,
+          };
+        });
+
+        resolve(result);
+      }
+    });
+  });
 };
+
+const getDifficultyLevelByIndex = (index: number): string => {
+  switch (index) {
+    case 0:
+      return 'Easy';
+    case 1:
+      return 'Medium';
+    case 2:
+      return 'Hard';
+    default:
+      return 'Unknown';
+  }
+};
+
+
+
 
 export const getStats4 = async (
   username: string | undefined
-): Promise<string> => {
-  return "";
+): Promise<{ category: string; easy: number; medium: number; hard: number }[]> => {
+  return new Promise<{ category: string; easy: number; medium: number; hard: number }[]>((resolve, reject) => {
+    const query = `
+      SELECT
+        category,
+        SUM(CASE WHEN difficulty_level = 'Easy' THEN 1 ELSE 0 END) AS easy,
+        SUM(CASE WHEN difficulty_level = 'Medium' THEN 1 ELSE 0 END) AS medium,
+        SUM(CASE WHEN difficulty_level = 'Hard' THEN 1 ELSE 0 END) AS hard
+      FROM
+        flashcards
+      WHERE
+        username = ?
+      GROUP BY
+        category;
+    `;
+
+    db.all(query, [username], (err, rows: { category: string; easy: number; medium: number; hard: number }[]) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
 };
+
 
 export const getStats5 = async (
   username: string | undefined
@@ -529,10 +598,10 @@ export const getStats5 = async (
   return new Promise<string>((resolve, reject) => {
     const query = `
     SELECT
-  COUNT(DISTINCT id) AS numberOfQuizzes,
+  COUNT(DISTINCT quiz_id) AS numberOfQuizzes,
   CASE
-    WHEN COUNT(DISTINCT id) > 0 THEN
-      ROUND(SUM((CAST(strftime('%s', end_date) AS REAL) - CAST(strftime('%s', start_date) AS REAL)) / 60) / COUNT(DISTINCT id))
+    WHEN COUNT(DISTINCT quiz_id) > 0 THEN
+      ROUND(SUM((CAST(strftime('%s', end_date) AS REAL) - CAST(strftime('%s', start_date) AS REAL)) / 60) / COUNT(DISTINCT quiz_id))
     ELSE
       0
   END AS averageTimePerQuiz
