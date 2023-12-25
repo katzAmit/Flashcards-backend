@@ -12,6 +12,7 @@ export type Flashcard = {
   answer: string;
   category: string;
   difficulty_level: difficulty_level; // Using the ENUM here
+  is_auto: number | undefined;
 };
 
 export type User = {
