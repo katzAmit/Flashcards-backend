@@ -3,7 +3,7 @@ import sqlite3 from "sqlite3";
 class DatabaseSingleton {
   private static instance: sqlite3.Database | null = null;
 
-  private constructor() { } // Prevents external instantiation
+  private constructor() {} // Prevents external instantiation
 
   static getInstance(): sqlite3.Database {
     if (!DatabaseSingleton.instance) {
@@ -64,6 +64,7 @@ class DatabaseSingleton {
       answer TEXT,
       category TEXT,
       difficulty_level TEXT CHECK( difficulty_level IN ('Easy','Medium','Hard') ),
+      is_auto INTEGER,
       FOREIGN KEY (username) REFERENCES users(username),
       FOREIGN KEY (category) REFERENCES category(category)
     )`,
@@ -167,6 +168,7 @@ class DatabaseSingleton {
         category: "Dynamic Programming",
         question: "How does dynamic programming differ from greedy algorithms?",
         answer: "Breaks problems into smaller parts for one-time solution.",
+        isAuto: 1,
       },
       {
         id: 2,
@@ -174,6 +176,7 @@ class DatabaseSingleton {
         question:
           "Solve the Fibonacci sequence problem using dynamic programming.",
         answer: "Store subproblems' solutions for Fibonacci calculation.",
+        isAuto: 1,
       },
       {
         id: 3,
@@ -181,6 +184,7 @@ class DatabaseSingleton {
         question: "Explain the concept of memoization in dynamic programming.",
         answer:
           "Cache costly function results to avoid redundant computations.",
+        isAuto: 1,
       },
       {
         id: 4,
@@ -189,6 +193,7 @@ class DatabaseSingleton {
           "Provide an example problem where dynamic programming can be applied other than Fibonacci.",
         answer:
           "Longest common subsequence problem demonstrates this technique.",
+        isAuto: 1,
       },
       {
         id: 5,
@@ -196,6 +201,7 @@ class DatabaseSingleton {
         question:
           "Explain the implications of time complexity in dynamic programming solutions.",
         answer: "Optimizes time but increases space complexity.",
+        isAuto: 1,
       },
       {
         id: 6,
@@ -203,12 +209,14 @@ class DatabaseSingleton {
         question:
           "Define the term 'reduction' in the context of NP-completeness.",
         answer: "Transform problems so solving one solves the other.",
+        isAuto: 1,
       },
       {
         id: 7,
         category: "NP Completeness",
         question: "Discuss the implications of proving a problem NP-complete.",
         answer: "Implies a problem's difficulty in NP and its link to P=NP.",
+        isAuto: 1,
       },
       {
         id: 8,
@@ -216,6 +224,7 @@ class DatabaseSingleton {
         question:
           "Explain the significance of Cook's theorem in NP-completeness.",
         answer: "SAT problem's NP-completeness foundation.",
+        isAuto: 1,
       },
       {
         id: 9,
@@ -223,6 +232,7 @@ class DatabaseSingleton {
         question:
           "Provide an example of an NP-complete problem other than the Boolean satisfiability problem (SAT).",
         answer: "Traveling salesman problem as another NP-complete issue.",
+        isAuto: 1,
       },
       {
         id: 10,
@@ -230,6 +240,7 @@ class DatabaseSingleton {
         question:
           "Explain the concept of polynomial-time verification in NP problems.",
         answer: "NP problems allow polynomial-time solution checks.",
+        isAuto: 1,
       },
       {
         id: 11,
@@ -238,6 +249,7 @@ class DatabaseSingleton {
           "Describe the 0/1 Knapsack problem and its applications in real-world scenarios.",
         answer:
           "Optimize item selection within weight constraints for maximum value.",
+        isAuto: 1,
       },
       {
         id: 12,
@@ -245,6 +257,7 @@ class DatabaseSingleton {
         question:
           "Explain the difference between the 0/1 Knapsack problem and the fractional Knapsack problem.",
         answer: "0/1 - items are whole; fractional - items can be divided.",
+        isAuto: 1,
       },
       {
         id: 13,
@@ -252,6 +265,7 @@ class DatabaseSingleton {
         question:
           "Provide an algorithm to solve the Knapsack problem using dynamic programming.",
         answer: "Use a table to iteratively find the maximum value.",
+        isAuto: 1,
       },
       {
         id: 14,
@@ -260,6 +274,7 @@ class DatabaseSingleton {
           "Discuss the concept of 'greedy choice' in the Knapsack problem.",
         answer:
           "Optimal solution might not come from maximum value-to-weight choice.",
+        isAuto: 1,
       },
       {
         id: 15,
@@ -267,6 +282,7 @@ class DatabaseSingleton {
         question:
           "Explain how dynamic programming reduces time complexity in solving the Knapsack problem.",
         answer: "Reduces time by storing subproblem solutions.",
+        isAuto: 1,
       },
       {
         id: 16,
@@ -274,6 +290,7 @@ class DatabaseSingleton {
         question:
           "Describe Prim's algorithm for finding a minimum spanning tree.",
         answer: "Builds minimum spanning tree by adding closest nodes.",
+        isAuto: 1,
       },
       {
         id: 17,
@@ -281,6 +298,7 @@ class DatabaseSingleton {
         question:
           "Discuss Kruskal's algorithm and its advantages over Prim's algorithm.",
         answer: "Grows tree with smallest edges, efficient for sparse graphs.",
+        isAuto: 0,
       },
       {
         id: 18,
@@ -289,6 +307,7 @@ class DatabaseSingleton {
           "Explain how Dijkstra's algorithm works and its time complexity.",
         answer:
           "Finds shortest path in weighted graphs with specific complexities.",
+        isAuto: 0,
       },
       {
         id: 19,
@@ -296,24 +315,28 @@ class DatabaseSingleton {
         question:
           "Provide an example of where Bellman-Ford algorithm is preferred over Dijkstra's algorithm.",
         answer: "Handles negative edge weights unlike Dijkstra's.",
+        isAuto: 0,
       },
       {
         id: 20,
         category: "Graph Algorithms",
         question: "Discuss the concept of 'backtracking' in graph algorithms.",
         answer: "Explores graph paths, used in algorithms like DFS.",
+        isAuto: 0,
       },
       {
         id: 21,
         category: "Data Structures",
         question: "Explain the working principles behind a Red-Black tree.",
         answer: "Self-balancing trees ensuring logarithmic height.",
+        isAuto: 0,
       },
       {
         id: 22,
         category: "Data Structures",
         question: "Discuss the differences between a stack and a queue.",
         answer: "LIFO vs. FIFO principles for different uses.",
+        isAuto: 0,
       },
       {
         id: 23,
@@ -321,12 +344,14 @@ class DatabaseSingleton {
         question:
           "Provide scenarios where a hash table is preferred over a binary search tree.",
         answer: "Best for dynamic data, offering constant-time operations.",
+        isAuto: 0,
       },
       {
         id: 24,
         category: "Data Structures",
         question: "Explain the concept of a trie and its applications.",
         answer: "Efficient storage for strings, used in autocomplete systems.",
+        isAuto: 0,
       },
       {
         id: 25,
@@ -334,14 +359,15 @@ class DatabaseSingleton {
         question:
           "Discuss the concept of 'collision resolution' in hash tables.",
         answer: "Methods to handle hash table index clashes.",
+        isAuto: 0,
       },
     ];
 
     flashcards.forEach((flashcards) => {
       const randomDifficulty = getRandomDifficulty();
       DatabaseSingleton.instance?.run(
-        `INSERT INTO flashcards (id, username, question, answer, category, difficulty_level)
-          VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO flashcards (id, username, question, answer, category, difficulty_level, is_auto)
+          VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           flashcards.id,
           "dyu@post.bgu.ac.il",
@@ -349,6 +375,7 @@ class DatabaseSingleton {
           flashcards.answer,
           flashcards.category,
           randomDifficulty,
+          flashcards.isAuto,
         ], // Set default difficulty
         (err) => {
           if (err) {

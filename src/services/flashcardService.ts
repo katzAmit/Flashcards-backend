@@ -20,11 +20,12 @@ export const createFlashcard = async (flashcard: Flashcard): Promise<void> => {
     answer: answer,
     category: category,
     difficulty_level: difficulty_level,
+    is_auto: is_auto,
   } = flashcard;
   return new Promise<void>((resolve, reject) => {
     db.run(
-      "INSERT INTO flashcards (id, username, question, answer, category, difficulty_level) VALUES (?, ?, ?, ?, ?, ?)",
-      [id, username, question, answer, category, difficulty_level],
+      "INSERT INTO flashcards (id, username, question, answer, category, difficulty_level, is_auto) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [id, username, question, answer, category, difficulty_level, is_auto],
       function (err) {
         if (err) {
           console.error(err);
@@ -41,11 +42,12 @@ export const updateFlashcardbyId = async (
   id: string,
   body: Partial<Flashcard>
 ): Promise<void> => {
-  const { username, question, answer, category, difficulty_level } = body;
+  const { username, question, answer, category, difficulty_level, is_auto } =
+    body;
   return new Promise<void>((resolve, reject) => {
     db.run(
-      "UPDATE flashcards SET question = ?, answer = ?, category = ?, difficulty_level = ? WHERE id = ?",
-      [question, answer, category, difficulty_level, id],
+      "UPDATE flashcards SET question = ?, answer = ?, category = ?, difficulty_level = ?, is_auto = ? WHERE id = ?",
+      [question, answer, category, difficulty_level, is_auto, id],
       function (err) {
         if (err) {
           console.error(err);
@@ -331,14 +333,17 @@ export const deleteCategory = async (
 
 export const updateFlashCards = async (flashcards: Flashcard[]) => {
   for (const flashcard of flashcards) {
-    const updatedFields: Partial<Flashcard> = {
-      username: flashcard.username,
-      question: flashcard.question,
-      answer: flashcard.answer,
-      category: flashcard.category,
-      difficulty_level: flashcard.difficulty_level,
-    };
-    await updateFlashcardbyId(flashcard.id, updatedFields);
+    if (flashcard.is_auto === 1) {
+      const updatedFields: Partial<Flashcard> = {
+        username: flashcard.username,
+        question: flashcard.question,
+        answer: flashcard.answer,
+        category: flashcard.category,
+        difficulty_level: flashcard.difficulty_level,
+        is_auto: flashcard.is_auto,
+      };
+      await updateFlashcardbyId(flashcard.id, updatedFields);
+    }
   }
 };
 
@@ -376,7 +381,9 @@ export const getMarathons = async (
             const marathonDate: Date = new Date(start_date);
             const today = new Date();
             const timeDiff = Math.abs(today.getTime() - marathonDate.getTime());
-            const currentDay: number = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            const currentDay: number = Math.floor(
+              timeDiff / (1000 * 60 * 60 * 24)
+            );
             marathonsMap.set(marathon_id, {
               marathon_id,
               quizzes: [],
@@ -476,8 +483,9 @@ export const getStats1 = async (
   });
 };
 
-export const getStats2 = async (username: string | undefined):
-Promise<{ category: string; questions: number }[]> => { 
+export const getStats2 = async (
+  username: string | undefined
+): Promise<{ category: string; questions: number }[]> => {
   const query = `
     SELECT
       category,
@@ -489,26 +497,24 @@ Promise<{ category: string; questions: number }[]> => {
     GROUP BY
       category;
   `;
-  
-  return new Promise<{ category: string; questions: number }[]>((resolve, reject) => {
-    db.all(query, (err, rows: { category: string , questions: number }[]) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      // const result = rows.map((row) => ({
-      //   x: row.category || "Unknown", // Use a default value if category is undefined
-      //   y: row.easyCount,
-      // }));
-      if(rows.length!= 0){
-        resolve(rows);
-      }
-      else
-      resolve([]);
-     
-    });
-  });
 
+  return new Promise<{ category: string; questions: number }[]>(
+    (resolve, reject) => {
+      db.all(query, (err, rows: { category: string; questions: number }[]) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        // const result = rows.map((row) => ({
+        //   x: row.category || "Unknown", // Use a default value if category is undefined
+        //   y: row.easyCount,
+        // }));
+        if (rows.length != 0) {
+          resolve(rows);
+        } else resolve([]);
+      });
+    }
+  );
 };
 
 export const getStats3 = async (
@@ -527,46 +533,53 @@ export const getStats3 = async (
         difficulty_level;
     `;
 
-    db.all(query, [username], (err, rows: { difficulty_level?: string; questionCount?: number }[]) => {
-      if (err) {
-        reject(err);
-      } else {
-        // Ensure the array length is exactly 3
-        const result = Array.from({ length: 3 }, (_, index) => {
-          const difficultyLevel = getDifficultyLevelByIndex(index);
-          const row = rows.find((r) => r.difficulty_level === difficultyLevel);
-          return {
-            x: row ? row.questionCount || 0 : 0,
-            y: row ? row.questionCount || 0 : 0,
-          };
-        });
+    db.all(
+      query,
+      [username],
+      (err, rows: { difficulty_level?: string; questionCount?: number }[]) => {
+        if (err) {
+          reject(err);
+        } else {
+          // Ensure the array length is exactly 3
+          const result = Array.from({ length: 3 }, (_, index) => {
+            const difficultyLevel = getDifficultyLevelByIndex(index);
+            const row = rows.find(
+              (r) => r.difficulty_level === difficultyLevel
+            );
+            return {
+              x: row ? row.questionCount || 0 : 0,
+              y: row ? row.questionCount || 0 : 0,
+            };
+          });
 
-        resolve(result);
+          resolve(result);
+        }
       }
-    });
+    );
   });
 };
 
 const getDifficultyLevelByIndex = (index: number): string => {
   switch (index) {
     case 0:
-      return 'Easy';
+      return "Easy";
     case 1:
-      return 'Medium';
+      return "Medium";
     case 2:
-      return 'Hard';
+      return "Hard";
     default:
-      return 'Unknown';
+      return "Unknown";
   }
 };
 
-
-
-
 export const getStats4 = async (
   username: string | undefined
-): Promise<{ category: string; easy: number; medium: number; hard: number }[]> => {
-  return new Promise<{ category: string; easy: number; medium: number; hard: number }[]>((resolve, reject) => {
+): Promise<
+  { category: string; easy: number; medium: number; hard: number }[]
+> => {
+  return new Promise<
+    { category: string; easy: number; medium: number; hard: number }[]
+  >((resolve, reject) => {
     const query = `
       SELECT
         category,
@@ -581,16 +594,22 @@ export const getStats4 = async (
         category;
     `;
 
-    db.all(query, [username], (err, rows: { category: string; easy: number; medium: number; hard: number }[]) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(rows);
+    db.all(
+      query,
+      [username],
+      (
+        err,
+        rows: { category: string; easy: number; medium: number; hard: number }[]
+      ) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
       }
-    });
+    );
   });
 };
-
 
 export const getStats5 = async (
   username: string | undefined
@@ -608,26 +627,28 @@ export const getStats5 = async (
 FROM quizzes;
   `;
 
-    db.get(query, (err, row: {numberOfQuizzes?: number, averageTimePerQuiz?: number }) => {
-      if (err) {
-        reject(err);
-      } else {
-        if (row) {
-          const numberOfQuizzes = row.numberOfQuizzes || 0;
-          const averageTimePerQuiz = row.averageTimePerQuiz || 0;
-  
-          // Access the results
-          if (numberOfQuizzes > 0) {
-            resolve(`${averageTimePerQuiz} min`);
-          } else {
-            resolve("0 min");
-          }
-        } else {
+    db.get(
+      query,
+      (err, row: { numberOfQuizzes?: number; averageTimePerQuiz?: number }) => {
+        if (err) {
           reject(err);
+        } else {
+          if (row) {
+            const numberOfQuizzes = row.numberOfQuizzes || 0;
+            const averageTimePerQuiz = row.averageTimePerQuiz || 0;
+
+            // Access the results
+            if (numberOfQuizzes > 0) {
+              resolve(`${averageTimePerQuiz} min`);
+            } else {
+              resolve("0 min");
+            }
+          } else {
+            reject(err);
+          }
         }
-        
       }
-    });
+    );
   });
 };
 export const createMarathonRecord = async (
@@ -781,4 +802,3 @@ export const getMarathonById = async (
     });
   });
 };
-

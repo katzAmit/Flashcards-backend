@@ -90,6 +90,7 @@ export default {
           answer: answer,
           category: category,
           difficulty_level: difficulty_level,
+          isAuto: isAuto,
         } = req.body;
         const newFlashcard: Flashcard = {
           id: id,
@@ -98,6 +99,7 @@ export default {
           answer: answer,
           category: category,
           difficulty_level: difficulty_level,
+          is_auto: isAuto,
         };
         const category_exist: boolean = await checkCategoryExists(
           username,
@@ -119,21 +121,26 @@ export default {
         const username = req.user?.username;
         const { cardId } = req.params;
         const updatedFields: Partial<Flashcard> = req.body;
+        const is_auto = updatedFields?.is_auto;
         const category = updatedFields?.category;
-        if (category) {
-          const category_exist: boolean = await checkCategoryExists(
-            username,
-            category
-          );
-          if (!category_exist) {
-            await addCategory(username, category);
+        if (is_auto === 1) {
+          if (category) {
+            const category_exist: boolean = await checkCategoryExists(
+              username,
+              category
+            );
+            if (!category_exist) {
+              await addCategory(username, category);
+            }
+            await updateFlashcardbyId(cardId, updatedFields);
+            const updatedFlashcard = await getFlashcardbyId(cardId);
+            if (!updatedFlashcard) {
+              return res.status(404).json({ error: "Flashcard not found" });
+            }
+            res.json(updatedFlashcard);
           }
-          await updateFlashcardbyId(cardId, updatedFields);
-          const updatedFlashcard = await getFlashcardbyId(cardId);
-          if (!updatedFlashcard) {
-            return res.status(404).json({ error: "Flashcard not found" });
-          }
-          res.json(updatedFlashcard);
+        } else {
+          return res.status(404).json({ error: "Flashcard is not Auto" });
         }
       }
     } catch (error) {
@@ -240,8 +247,6 @@ export default {
       let stat5 = await flashcardService.getStats5(username);
       stats.push(stat5);
       res.status(200).json(stats);
-
-
     } catch (error) {
       console.error("Error generating stats:", error);
       res.status(500).json({ error: "Failed to generate stats" });
