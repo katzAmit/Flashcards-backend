@@ -365,7 +365,7 @@ export default {
               Math.random() * allFlashcardsInCategory.length
             );
 
-            while (usedMap[randomIndex] === 1) {
+            while (usedMap[randomIndex] === 1 || curQuiz.flashcards.includes(allFlashcardsInCategory[randomIndex])) {
               randomIndex = Math.floor(
                 Math.random() * allFlashcardsInCategory.length
               );
