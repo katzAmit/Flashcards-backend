@@ -207,7 +207,7 @@ export default {
     try {
       const username = req.user?.username;
       if (username) {
-        const categories: Category[] = await getCategories(username);
+        const categories: Category | {} = await getCategories(username);
         if (!categories) {
           return res.status(404).json({ error: "Flashcard not found" });
         }
@@ -317,73 +317,85 @@ export default {
   },
 
   generateMarathon: async (req: RequestWithUserPayload, res: Response) => {
-    const { category, total_days } = req.body;
+    let { category, total_days, num_questions, num_quiz } = req.body;
     const username = req.user?.username;
-
+    num_quiz = (num_quiz == 'undefined') ? 1 : num_quiz
     if (!username) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
+    const allFlashcardsInCategory = await getFlashcards(username, category);
+    num_questions = (num_questions == 'undefined') ?
+      Math.floor(allFlashcardsInCategory.length / (total_days * num_quiz)) : num_questions
 
+    const usedMap: number[] = new Array(
+      allFlashcardsInCategory.length
+    ).fill(0);
+    const numOfFlashcardsPerQuiz = num_questions
+    if (allFlashcardsInCategory.length < num_questions) {
+      res.status(400).json({
+        error: `${category}' doesn't have enough flashcards for a single quiz`
+      });
+      return;
+    }
     try {
       const startDate = new Date(); // Current date as start date for the marathon
       const curMarathonUUID = uuidv4();
       for (let i = 0; i < total_days; i++) {
-        const curQuizUUID = uuidv4(); // Generate UUID for the quiz
 
-        const curQuiz: any = {
-          id: `quiz${i + 1}`,
-          physical_id: curQuizUUID, // UUID for the quiz
-          title: `Quiz ${i + 1}`,
-          categories: [category],
-          flashcards: [],
-          difficulty_levels: ["Easy", "Medium", "Hard"],
-        };
+        for (let k = 0; k < num_quiz; k++) {
+          const curQuizUUID = uuidv4(); // Generate UUID for the quiz
 
-        const allFlashcardsInCategory = await getFlashcards(username, category);
-        const usedMap: number[] = new Array(
-          allFlashcardsInCategory.length
-        ).fill(0);
-        const numOfFlashcardsPerQuiz = Math.floor(
-          allFlashcardsInCategory.length / total_days
-        );
+          const curQuiz: any = {
+            physical_id: curQuizUUID, // UUID for the quiz
+            title: `Quiz - Day ${i + 1}`,
+            categories: [category],
+            flashcards: [],
+            difficulty_levels: ["Easy", "Medium", "Hard"],
+          };
 
-        for (let j = 0; j < numOfFlashcardsPerQuiz; j++) {
-          let randomIndex = Math.floor(
-            Math.random() * allFlashcardsInCategory.length
-          );
 
-          while (usedMap[randomIndex] === 1) {
-            randomIndex = Math.floor(
+          for (let j = 0; j < numOfFlashcardsPerQuiz; j++) {
+            let randomIndex = Math.floor(
               Math.random() * allFlashcardsInCategory.length
             );
+
+            while (usedMap[randomIndex] === 1) {
+              randomIndex = Math.floor(
+                Math.random() * allFlashcardsInCategory.length
+              );
+            }
+
+            usedMap[randomIndex] = 1;
+            const allUsed = usedMap.every(status => status === 1);
+            if (allUsed) {
+              usedMap.fill(0);
+            }
+            const selectedFlashcard = allFlashcardsInCategory[randomIndex];
+
+            // Create quiz record for each flashcard in the quiz
+            await createQuizRecord(
+              curQuiz.physical_id,
+              selectedFlashcard.id,
+              username,
+              selectedFlashcard.difficulty_level,
+              category
+            );
+
+            curQuiz.flashcards.push(selectedFlashcard);
           }
 
-          usedMap[randomIndex] = 1;
-          const selectedFlashcard = allFlashcardsInCategory[randomIndex];
-
-          // Create quiz record for each flashcard in the quiz
-          await createQuizRecord(
-            curQuiz.physical_id,
-            selectedFlashcard.id,
+          await createMarathonRecord(
+            curMarathonUUID,
+            curQuizUUID,
             username,
-            selectedFlashcard.difficulty_level,
-            category
+            category,
+            i, // Current day starting from 0
+            total_days,
+            startDate, // Start date for the marathon
+            0
           );
-
-          curQuiz.flashcards.push(selectedFlashcard);
         }
-
-        await createMarathonRecord(
-          curMarathonUUID,
-          curQuizUUID,
-          username,
-          category,
-          i, // Current day starting from 0
-          total_days,
-          startDate, // Start date for the marathon
-          0
-        );
       }
 
       res.status(200).json(curMarathonUUID);
