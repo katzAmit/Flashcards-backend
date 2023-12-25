@@ -228,22 +228,41 @@ export const userExists = async (username: string): Promise<boolean> => {
     });
   });
 };
-export const getCategories = async (username: string): Promise<Category[]> => {
+export const getCategories = async (
+  username: string
+): Promise<any[]> => {
   const categoriesQuery = "SELECT category FROM categories WHERE username = ?";
-  return new Promise<Category[]>((resolve, reject) => {
-    db.all(categoriesQuery, [username], (err, rows: { category: string }[]) => {
+  return new Promise<any[]>((resolve, reject) => {
+    db.all(categoriesQuery, [username], async (err, rows: { category: string }[]) => {
       if (err) {
         reject(err);
       } else {
-        const categories: Category[] = rows.map((row) => ({
-          category: row.category,
-          username: username,
-        }));
-        resolve(categories);
+        const categoriesWithCounts = await Promise.all(
+          rows.map(async (row) => {
+            const category = row.category;
+            const flashcardCountQuery = "SELECT COUNT(*) as total FROM flashcards WHERE username = ? AND category = ?";
+            const flashcardCount = await new Promise<number>((innerResolve, innerReject) => {
+              db.get(flashcardCountQuery, [username, category], (flashcardErr, result: any) => {
+                if (flashcardErr) {
+                  innerReject(flashcardErr);
+                } else {
+                  innerResolve(result.total);
+                }
+              });
+            });
+            return {
+              category: category,
+              username: username,
+              flashcardCount: flashcardCount
+            };
+          })
+        );
+        resolve(categoriesWithCounts);
       }
     });
   });
 };
+
 //categories
 export const checkCategoryExists = (
   username: string,
@@ -498,23 +517,25 @@ export const getStats2 = async (
       category;
   `;
 
-  return new Promise<{ category: string; questions: number }[]>(
-    (resolve, reject) => {
-      db.all(query, (err, rows: { category: string; questions: number }[]) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        // const result = rows.map((row) => ({
-        //   x: row.category || "Unknown", // Use a default value if category is undefined
-        //   y: row.easyCount,
-        // }));
-        if (rows.length != 0) {
-          resolve(rows);
-        } else resolve([]);
-      });
-    }
-  );
+  return new Promise<{ category: string; questions: number }[]>((resolve, reject) => {
+    db.all(query, (err, rows: { category: string, questions: number }[]) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      // const result = rows.map((row) => ({
+      //   x: row.category || "Unknown", // Use a default value if category is undefined
+      //   y: row.easyCount,
+      // }));
+      if (rows.length != 0) {
+        resolve(rows);
+      }
+      else
+        resolve([]);
+
+    });
+  });
+
 };
 
 export const getStats3 = async (
@@ -711,8 +732,8 @@ export const getQuizIdByCurrentDay = async (
 ): Promise<string> => {
   return new Promise<string>((resolve, reject) => {
     db.get(
-      "SELECT quiz_id FROM marathons WHERE marathon_id = ? AND current_day = ?",
-      [marathon_id, current_day],
+      "SELECT quiz_id FROM marathons WHERE marathon_id = ? AND current_day = ? AND did_quiz = ?",
+      [marathon_id, current_day, 0],
       (err, row: { quiz_id: string }) => {
         if (err) {
           console.error(err);
@@ -720,6 +741,8 @@ export const getQuizIdByCurrentDay = async (
         } else {
           if (row && row.quiz_id) {
             resolve(row.quiz_id);
+          } else {
+            resolve("fffffff")
           }
         }
       }
@@ -744,6 +767,40 @@ export const getFlashcardIdsByQuizId = async (
     });
   }
 };
+export const getTotalDays = async (
+  marathon_id: string,
+): Promise<number> => {
+  return new Promise<number>((resolve, reject) => {
+    db.get(
+      "SELECT total_days FROM marathons WHERE marathon_id = ?",
+      [marathon_id],
+      (err, row: { total_days: number }) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          resolve(row.total_days)
+        }
+      }
+    );
+  });
+};
+export const deleteMarathonRecords = async (marathon_id: string): Promise<void> => {
+  return new Promise<void>((resolve, reject) => {
+    db.run(
+      "DELETE FROM marathons WHERE marathon_id = ?",
+      [marathon_id],
+      (err) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          resolve();
+        }
+      }
+    );
+  });
+};
 
 export const getCurrentMarathonQuiz = async (marathon_id: string) => {
   try {
@@ -760,7 +817,17 @@ export const getCurrentMarathonQuiz = async (marathon_id: string) => {
     );
     const flashcards: Flashcard[] = await Promise.all(flashcardPromises);
     const theMarathon = await getMarathonById(marathon_id, quizId);
-    const did_quiz = theMarathon?.did_quiz;
+    let did_quiz = (theMarathon) ? theMarathon.did_quiz : 1
+    if (did_quiz == 1) {
+      const totalDays: number = await getTotalDays(marathon_id)
+      const startDate = new Date(marathonStartDate);
+      const endDate = new Date(startDate.getTime() + (totalDays - 1) * 24 * 60 * 60 * 1000); // Adding days in milliseconds
+      const hasSurpassedToday = endDate < today;
+      if (hasSurpassedToday) {
+        did_quiz = 2
+        deleteMarathonRecords(marathon_id)
+      }
+    }
     return { id: quizId, flashcards: flashcards, did_quiz: did_quiz };
   } catch (e) {
     console.error(e);
