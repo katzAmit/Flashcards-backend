@@ -123,7 +123,7 @@ export default {
         const updatedFields: Partial<Flashcard> = req.body;
         const is_auto = updatedFields?.is_auto;
         const category = updatedFields?.category;
-        if (is_auto === 1) {
+        if (is_auto === 1 || is_auto === undefined) {
           if (category) {
             const category_exist: boolean = await checkCategoryExists(
               username,
