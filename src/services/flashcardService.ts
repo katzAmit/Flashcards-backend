@@ -638,12 +638,14 @@ export const createMarathonRecord = async (
   currentDay: number,
   totalDays: number,
   startDate: Date,
-  did_quiz: number
+  did_quiz: number,
+  num_questions: number,
+  num_quizes: number
 ) => {
   return new Promise<void>((resolve, reject) => {
     db.run(
-      `INSERT INTO marathons (marathon_id, quiz_id, username, category, current_day, total_days, start_date, did_quiz)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO marathons (marathon_id, quiz_id, username, category, current_day, total_days, start_date, did_quiz, num_questions, num_quizes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         marathonId,
         quizId,
@@ -653,6 +655,8 @@ export const createMarathonRecord = async (
         totalDays,
         startDate.toISOString(),
         did_quiz,
+        num_questions,
+        num_quizes
       ],
       (err) => {
         if (err) {

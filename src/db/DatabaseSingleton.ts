@@ -89,9 +89,12 @@ class DatabaseSingleton {
         total_days INTEGER,
         start_date DATE,
         did_quiz INTEGER,
+        num_questions INTEGER,
+        num_quizes INTEGER
         PRIMARY KEY (marathon_id, quiz_id),
         FOREIGN KEY (category) REFERENCES categories(category),
-        FOREIGN KEY (username) REFERENCES users(username)
+        FOREIGN KEY (username) REFERENCES users(username),
+        
       )`,
       (initErr: any) => {
         if (initErr) {
