@@ -123,22 +123,20 @@ export default {
         const updatedFields: Partial<Flashcard> = req.body;
         const is_auto = updatedFields?.is_auto;
         const category = updatedFields?.category;
-        if (is_auto === 1 || is_auto === undefined) {
-          if (category) {
-            const category_exist: boolean = await checkCategoryExists(
-              username,
-              category
-            );
-            if (!category_exist) {
-              await addCategory(username, category);
-            }
-            await updateFlashcardbyId(cardId, updatedFields);
-            const updatedFlashcard = await getFlashcardbyId(cardId);
-            if (!updatedFlashcard) {
-              return res.status(404).json({ error: "Flashcard not found" });
-            }
-            res.json(updatedFlashcard);
+        if (category) {
+          const category_exist: boolean = await checkCategoryExists(
+            username,
+            category
+          );
+          if (!category_exist) {
+            await addCategory(username, category);
           }
+          await updateFlashcardbyId(cardId, updatedFields);
+          const updatedFlashcard = await getFlashcardbyId(cardId);
+          if (!updatedFlashcard) {
+            return res.status(404).json({ error: "Flashcard not found" });
+          }
+          res.json(updatedFlashcard);
         } else {
           return res.status(404).json({ error: "Flashcard is not Auto" });
         }
@@ -324,22 +322,22 @@ export default {
   generateMarathon: async (req: RequestWithUserPayload, res: Response) => {
     let { category, total_days, num_questions, num_quiz } = req.body;
     const username = req.user?.username;
-    num_quiz = (num_quiz == 'undefined') ? 1 : num_quiz
+    num_quiz = num_quiz == "undefined" ? 1 : num_quiz;
     if (!username) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
     const allFlashcardsInCategory = await getFlashcards(username, category);
-    num_questions = (num_questions == 'undefined') ?
-      Math.floor(allFlashcardsInCategory.length / (total_days * num_quiz)) : num_questions
+    num_questions =
+      num_questions == "undefined"
+        ? Math.floor(allFlashcardsInCategory.length / (total_days * num_quiz))
+        : num_questions;
 
-    const usedMap: number[] = new Array(
-      allFlashcardsInCategory.length
-    ).fill(0);
-    const numOfFlashcardsPerQuiz = num_questions
+    const usedMap: number[] = new Array(allFlashcardsInCategory.length).fill(0);
+    const numOfFlashcardsPerQuiz = num_questions;
     if (allFlashcardsInCategory.length < num_questions) {
       res.status(400).json({
-        error: `${category}' doesn't have enough flashcards for a single quiz`
+        error: `${category}' doesn't have enough flashcards for a single quiz`,
       });
       return;
     }
@@ -347,7 +345,6 @@ export default {
       const startDate = new Date(); // Current date as start date for the marathon
       const curMarathonUUID = uuidv4();
       for (let i = 0; i < total_days; i++) {
-
         for (let k = 0; k < num_quiz; k++) {
           const curQuizUUID = uuidv4(); // Generate UUID for the quiz
 
@@ -359,20 +356,22 @@ export default {
             difficulty_levels: ["Easy", "Medium", "Hard"],
           };
 
-
           for (let j = 0; j < numOfFlashcardsPerQuiz; j++) {
             let randomIndex = Math.floor(
               Math.random() * allFlashcardsInCategory.length
             );
 
-            while (usedMap[randomIndex] === 1 || curQuiz.flashcards.includes(allFlashcardsInCategory[randomIndex])) {
+            while (
+              usedMap[randomIndex] === 1 ||
+              curQuiz.flashcards.includes(allFlashcardsInCategory[randomIndex])
+            ) {
               randomIndex = Math.floor(
                 Math.random() * allFlashcardsInCategory.length
               );
             }
 
             usedMap[randomIndex] = 1;
-            const allUsed = usedMap.every(status => status === 1);
+            const allUsed = usedMap.every((status) => status === 1);
             if (allUsed) {
               usedMap.fill(0);
             }
