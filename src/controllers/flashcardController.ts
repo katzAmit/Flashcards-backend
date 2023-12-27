@@ -261,7 +261,7 @@ export default {
 
       for (let i = 0; i < categories.length; i++) {
         const selectedFlashcards = await getFlashcards(username, categories[i]);
-
+        const usedMap: number[] = new Array(selectedFlashcards.length).fill(0);
         if (selectedFlashcards.length < selectedNumberOfQuestionsPerQuiz) {
           res.status(400).json({
             error: `Category '${categories[i]}' doesn't have enough flashcards for a quiz.`,
@@ -269,20 +269,24 @@ export default {
           return;
         }
 
-        const selectedIndices = new Set<number>();
-        const selectedDifficultyLevels = new Set<string>();
-
         const numFlashcards = selectedFlashcards.length;
         for (
           let j = 0;
           j < Math.floor(numFlashcards / selectedNumberOfQuestionsPerQuiz);
           j += 1
         ) {
+          const selectedIndices = new Set<number>();
+          const selectedDifficultyLevels = new Set<string>();
+          let randomIndex = Math.floor(
+            Math.random() * selectedFlashcards.length
+          );
           while (selectedIndices.size < selectedNumberOfQuestionsPerQuiz) {
-            const randomIndex = Math.floor(
-              Math.random() * selectedFlashcards.length
-            );
-
+            while (usedMap[randomIndex] === 1) {
+              randomIndex = Math.floor(
+                Math.random() * selectedFlashcards.length
+              );
+            }
+            usedMap[randomIndex] += 1;
             if (!selectedIndices.has(randomIndex)) {
               selectedIndices.add(randomIndex);
               selectedDifficultyLevels.add(
