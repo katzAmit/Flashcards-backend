@@ -90,7 +90,7 @@ export default {
           answer: answer,
           category: category,
           difficulty_level: difficulty_level,
-          isAuto: isAuto,
+          is_auto: is_auto,
         } = req.body;
         const newFlashcard: Flashcard = {
           id: id,
@@ -99,7 +99,7 @@ export default {
           answer: answer,
           category: category,
           difficulty_level: difficulty_level,
-          is_auto: isAuto,
+          is_auto: is_auto,
         };
         const category_exist: boolean = await checkCategoryExists(
           username,
@@ -253,7 +253,7 @@ export default {
 
   // quizzes
   getQuizzes: async (req: RequestWithUserPayload, res: Response) => {
-    const { categories } = req.body;
+    const { categories, selectedNumberOfQuestionsPerQuiz } = req.body;
     const username = req.user?.username;
 
     try {
@@ -262,7 +262,7 @@ export default {
       for (let i = 0; i < categories.length; i++) {
         const selectedFlashcards = await getFlashcards(username, categories[i]);
 
-        if (selectedFlashcards.length < 5) {
+        if (selectedFlashcards.length < selectedNumberOfQuestionsPerQuiz) {
           res.status(400).json({
             error: `Category '${categories[i]}' doesn't have enough flashcards for a quiz.`,
           });
@@ -273,45 +273,50 @@ export default {
         const selectedDifficultyLevels = new Set<string>();
 
         const numFlashcards = selectedFlashcards.length;
-
-        while (selectedIndices.size < numFlashcards) {
-          const randomIndex = Math.floor(
-            Math.random() * selectedFlashcards.length
-          );
-
-          if (!selectedIndices.has(randomIndex)) {
-            selectedIndices.add(randomIndex);
-            selectedDifficultyLevels.add(
-              selectedFlashcards[randomIndex].difficulty_level
+        for (
+          let j = 0;
+          j < Math.floor(numFlashcards / selectedNumberOfQuestionsPerQuiz);
+          j += 1
+        ) {
+          while (selectedIndices.size < selectedNumberOfQuestionsPerQuiz) {
+            const randomIndex = Math.floor(
+              Math.random() * selectedFlashcards.length
             );
+
+            if (!selectedIndices.has(randomIndex)) {
+              selectedIndices.add(randomIndex);
+              selectedDifficultyLevels.add(
+                selectedFlashcards[randomIndex].difficulty_level
+              );
+            }
           }
+
+          const selectedDifficultyLevelsArray = Array.from(
+            selectedDifficultyLevels
+          ).sort((a, b) => {
+            const difficultyOrder = ["Easy", "Medium", "Hard"];
+            return difficultyOrder.indexOf(a) - difficultyOrder.indexOf(b);
+          });
+
+          const selectedFlashcardIndices: number[] =
+            Array.from(selectedIndices);
+
+          const selectedFlashcardsForQuiz: Flashcard[] =
+            selectedFlashcardIndices.map(
+              (index: number) => selectedFlashcards[index]
+            );
+
+          const quiz = {
+            id: `Quiz_${i + 1}`,
+            title: `Quiz ${i + 1}`,
+            categories: [categories[i]],
+            flashcards: selectedFlashcardsForQuiz,
+            difficulty_levels: selectedDifficultyLevelsArray,
+          };
+
+          quizzes.push(quiz);
         }
-
-        const selectedDifficultyLevelsArray = Array.from(
-          selectedDifficultyLevels
-        ).sort((a, b) => {
-          const difficultyOrder = ["Easy", "Medium", "Hard"];
-          return difficultyOrder.indexOf(a) - difficultyOrder.indexOf(b);
-        });
-
-        const selectedFlashcardIndices: number[] = Array.from(selectedIndices);
-
-        const selectedFlashcardsForQuiz: Flashcard[] =
-          selectedFlashcardIndices.map(
-            (index: number) => selectedFlashcards[index]
-          );
-
-        const quiz = {
-          id: `Quiz_${i + 1}`,
-          title: `Quiz ${i + 1}`,
-          categories: [categories[i]],
-          flashcards: selectedFlashcardsForQuiz,
-          difficulty_levels: selectedDifficultyLevelsArray,
-        };
-
-        quizzes.push(quiz);
       }
-
       res.status(200).json(quizzes);
     } catch (error) {
       console.error("Error generating quizzes:", error);
