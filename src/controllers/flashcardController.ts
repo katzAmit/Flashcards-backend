@@ -228,12 +228,6 @@ export default {
     try {
       const stats = [];
 
-      // for (let i = 1; i < 6; i++) {
-      //   const functionName = `getStats${i}`;
-      //   const stat = await flashcardService.(window as any)[functionName](username);
-      //   stats.push(stat);
-      // }
-
       let stat1 = await flashcardService.getStats1(username);
       stats.push(stat1);
       let stat2 = await flashcardService.getStats2(username);
@@ -244,6 +238,8 @@ export default {
       stats.push(stat4);
       let stat5 = await flashcardService.getStats5(username);
       stats.push(stat5);
+      let stat6 = await flashcardService.getStats6(username);
+      stats.push(stat6);
       res.status(200).json(stats);
     } catch (error) {
       console.error("Error generating stats:", error);
@@ -255,8 +251,12 @@ export default {
   getQuizzes: async (req: RequestWithUserPayload, res: Response) => {
     let { categories, selectedNumberOfQuestionsPerQuiz } = req.body;
     const username = req.user?.username;
-    if (!selectedNumberOfQuestionsPerQuiz || selectedNumberOfQuestionsPerQuiz == 0 || selectedNumberOfQuestionsPerQuiz == 'undefined') {
-      selectedNumberOfQuestionsPerQuiz = 3
+    if (
+      !selectedNumberOfQuestionsPerQuiz ||
+      selectedNumberOfQuestionsPerQuiz == 0 ||
+      selectedNumberOfQuestionsPerQuiz == "undefined"
+    ) {
+      selectedNumberOfQuestionsPerQuiz = 3;
     }
     try {
       const quizzes = [];
@@ -333,17 +333,17 @@ export default {
   generateMarathon: async (req: RequestWithUserPayload, res: Response) => {
     let { category, total_days, num_questions, num_quiz } = req.body;
     const username = req.user?.username;
-    num_quiz = (num_quiz == undefined) ? 1 : num_quiz;
+    num_quiz = num_quiz == undefined ? 1 : num_quiz;
     if (!username) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
     const allFlashcardsInCategory = await getFlashcards(username, category);
     num_questions =
-      (num_questions == undefined)
+      num_questions == undefined
         ? Math.floor(allFlashcardsInCategory.length / (total_days * num_quiz))
         : num_questions;
-    num_questions = (num_questions < 3) ? 3 : num_questions
+    num_questions = num_questions < 3 ? 3 : num_questions;
     const usedMap: number[] = new Array(allFlashcardsInCategory.length).fill(0);
     const numOfFlashcardsPerQuiz = num_questions;
     if (allFlashcardsInCategory.length < num_questions) {
