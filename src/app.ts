@@ -1,6 +1,6 @@
 import express from 'express';
 import flashcardRoutes from './routes/flashcardRoutes';
-import DatabaseSingleton from './db/DatabaseSingleton';
+import DatabaseSingleton from './db/DatabaseManager';
 import authenticateToken from './middleware/middleware'
 import flashController from './controllers/flashcardController'
 const cors = require('cors');

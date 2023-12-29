@@ -1,5 +1,5 @@
 import { Database } from "sqlite3";
-import DatabaseSingleton from "../db/DatabaseSingleton";
+import DatabaseSingleton from "../db/DatabaseManager";
 import {
   Category,
   Flashcard,
@@ -811,7 +811,6 @@ export const getCurrentMarathonQuiz = async (marathon_id: string) => {
     const currentDay: number = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
     const quizId: string = await getQuizIdByCurrentDay(marathon_id, currentDay);
     const flashcardIds: string[] = await getFlashcardIdsByQuizId(quizId);
-    console.log("Flashcards ARE!", flashcardIds);
     const flashcardPromises = flashcardIds.map((flashcard_id) =>
       getFlashcardbyId(flashcard_id)
     );

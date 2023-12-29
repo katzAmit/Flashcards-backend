@@ -253,9 +253,11 @@ export default {
 
   // quizzes
   getQuizzes: async (req: RequestWithUserPayload, res: Response) => {
-    const { categories, selectedNumberOfQuestionsPerQuiz } = req.body;
+    let { categories, selectedNumberOfQuestionsPerQuiz } = req.body;
     const username = req.user?.username;
-
+    if (!selectedNumberOfQuestionsPerQuiz || selectedNumberOfQuestionsPerQuiz == 0 || selectedNumberOfQuestionsPerQuiz == 'undefined') {
+      selectedNumberOfQuestionsPerQuiz = 3
+    }
     try {
       const quizzes = [];
 
@@ -264,7 +266,7 @@ export default {
         const usedMap: number[] = new Array(selectedFlashcards.length).fill(0);
         if (selectedFlashcards.length < selectedNumberOfQuestionsPerQuiz) {
           res.status(400).json({
-            error: `Category '${categories[i]}' doesn't have enough flashcards for a quiz.`,
+            error: `Category '${categories[i]}' doesn't have enough flashcards to generate quizzes, either below 3 or lower than requested number of questions per quiz`,
           });
           return;
         }
@@ -331,17 +333,17 @@ export default {
   generateMarathon: async (req: RequestWithUserPayload, res: Response) => {
     let { category, total_days, num_questions, num_quiz } = req.body;
     const username = req.user?.username;
-    num_quiz = num_quiz == "undefined" ? 1 : num_quiz;
+    num_quiz = (num_quiz == undefined) ? 1 : num_quiz;
     if (!username) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
     const allFlashcardsInCategory = await getFlashcards(username, category);
     num_questions =
-      num_questions == "undefined"
+      (num_questions == undefined)
         ? Math.floor(allFlashcardsInCategory.length / (total_days * num_quiz))
         : num_questions;
-
+    num_questions = (num_questions < 3) ? 3 : num_questions
     const usedMap: number[] = new Array(allFlashcardsInCategory.length).fill(0);
     const numOfFlashcardsPerQuiz = num_questions;
     if (allFlashcardsInCategory.length < num_questions) {
