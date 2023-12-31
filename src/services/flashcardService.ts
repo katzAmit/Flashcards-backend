@@ -511,39 +511,121 @@ export const getStats1 = async (
   });
 };
 
+// export const getStats2 = async (
+//   username: string | undefined
+// ): Promise<{ category: string; questions: number }[]> => {
+//   const query = `
+//     SELECT
+//       category,
+//       COUNT(*) AS questions
+//     FROM
+//       flashcards
+//     WHERE
+//       difficulty_level = 'Easy'
+//     GROUP BY
+//       category;
+//   `;
+
+//   // const query = `
+//   //   SELECT
+//   //     category,
+//   //     COUNT(*) AS questionss
+//   //   FROM
+//   //     quizzes
+//   //   WHERE
+//   //     difficulty_level = 'Easy' AND username = ?
+//   //   GROUP BY
+//   //     category
+//   // `;
+
+//   return new Promise<{ category: string; questions: number }[]>(
+//     (resolve, reject) => {
+//       db.all(query, (err, rows: { category: string; questions: number }[]) => {
+//         if (err) {
+//           reject(err);
+//           return;
+//         }
+//         if (rows.length != 0) {
+//           resolve(rows);
+//         } else resolve([]);
+//       });
+//     }
+//   );
+// };
+
 export const getStats2 = async (
   username: string | undefined
 ): Promise<{ category: string; questions: number }[]> => {
-  const query = `
+  const quizzesQuery = `
+    SELECT
+      category,
+      COUNT(*) AS questions
+    FROM
+      quizzes
+    WHERE
+      difficulty_level = 'Easy' AND username = ?
+    GROUP BY
+      category
+    ORDER BY
+      questions DESC;
+  `;
+
+  const flashcardsQuery = `
     SELECT
       category,
       COUNT(*) AS questions
     FROM
       flashcards
     WHERE
-      difficulty_level = 'Easy'
+      difficulty_level = 'Easy' AND username = ?
     GROUP BY
       category;
   `;
 
   return new Promise<{ category: string; questions: number }[]>(
     (resolve, reject) => {
-      db.all(query, (err, rows: { category: string; questions: number }[]) => {
-        if (err) {
-          reject(err);
+      // Check if there are rows in the quizzes table
+      db.get<{ count: number }>("SELECT COUNT(*) as count FROM quizzes WHERE username = ?", [username], (countErr, countRow) => {
+        if (countErr) {
+          reject(countErr);
           return;
         }
-        // const result = rows.map((row) => ({
-        //   x: row.category || "Unknown", // Use a default value if category is undefined
-        //   y: row.easyCount,
-        // }));
-        if (rows.length != 0) {
-          resolve(rows);
-        } else resolve([]);
+
+        const quizRowCount = countRow?.count || 0;
+
+        if (quizRowCount > 0) {
+          // Use the quizzes query if there are rows
+          db.all(quizzesQuery, [username], (err, rows: { category: string; questions: number }[]) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            if (rows !== null) {
+              resolve(rows);
+            } else {
+              resolve([]);
+            }
+          });
+        } else {
+          // Use the flashcards query if there are no rows in quizzes table
+          db.all(flashcardsQuery, [username], (flashcardsErr, flashcardsRows: { category: string; questions: number }[]) => {
+            if (flashcardsErr) {
+              reject(flashcardsErr);
+              return;
+            }
+            if (flashcardsRows !== null) {
+              resolve(flashcardsRows);
+            } else {
+              resolve([]);
+            }
+          });
+        }
       });
     }
   );
 };
+
+
 
 export const getStats3 = async (
   username: string | undefined
@@ -560,6 +642,8 @@ export const getStats3 = async (
       GROUP BY
         difficulty_level;
     `;
+
+    
 
     db.all(
       query,
@@ -683,52 +767,110 @@ FROM quizzes;
 export const getStats6 = async (
   username: string | undefined
 ): Promise<{ easyCategory: string; hardCategory: string } | null> => {
-  return new Promise<{ easyCategory: string; hardCategory: string } | null>(
-    (resolve, reject) => {
-      const query = `
-        SELECT
-          category,
-          SUM(CASE WHEN difficulty_level = 'Easy' THEN 1 ELSE 0 END) AS easy,
-          SUM(CASE WHEN difficulty_level = 'Hard' THEN 1 ELSE 0 END) AS hard
-        FROM
-          flashcards
-        WHERE
-          username = ?
-        GROUP BY
-          category
-        ORDER BY
-          easy DESC, hard DESC
-        LIMIT 2;
-      `;
+  const queryFlashcards = `
+    SELECT
+      category,
+      SUM(CASE WHEN difficulty_level = 'Easy' THEN 1 ELSE 0 END) AS easy,
+      SUM(CASE WHEN difficulty_level = 'Hard' THEN 1 ELSE 0 END) AS hard
+    FROM
+      flashcards
+    WHERE
+      username = ?
+    GROUP BY
+      category
+    ORDER BY
+      easy DESC, hard DESC
+    LIMIT 2;
+  `;
 
-      db.all(
-        query,
-        [username],
-        (
-          err,
-          rows: {
-            category: string;
-            easy: number;
-            hard: number;
-          }[]
-        ) => {
-          if (err) {
-            reject(err);
-          } else {
-            if (rows.length === 2) {
-              const easyCategory = rows[0].category;
-              const hardCategory = rows[1].category;
-              resolve({ easyCategory, hardCategory });
-            } else {
-              // If there are not enough categories, return null or handle appropriately
-              resolve(null);
-            }
-          }
+  const queryQuizzes = `
+    SELECT
+      category,
+      SUM(CASE WHEN difficulty_level = 'Easy' THEN 1 ELSE 0 END) AS easy,
+      SUM(CASE WHEN difficulty_level = 'Hard' THEN 1 ELSE 0 END) AS hard
+    FROM
+      flashcards
+    WHERE
+      username = ?
+    GROUP BY
+      category
+    ORDER BY
+      easy DESC, hard DESC
+    LIMIT 2;
+  `;
+
+  return new Promise<{ easyCategory: string; hardCategory: string } | null>(
+    (resolve, reject) => { 
+      db.get<{ count: number }>("SELECT COUNT(*) as count FROM quizzes WHERE username = ?", [username], (countErr, countRow) => {
+        if (countErr) {
+          reject(countErr);
+          return;
         }
-      );
+
+        const quizRowCount = countRow?.count || 0;
+
+        if (quizRowCount > 0) {
+          db.all(
+            queryQuizzes,
+            [username],
+            (
+              err,
+              rows: {
+                category: string;
+                easy: number;
+                hard: number;
+              }[]
+            ) => {
+              if (err) {
+                reject(err);
+              } else {
+                if (rows.length === 2) {
+                  const easyCategory = rows[0].category;
+                  const hardCategory = rows[1].category;
+                  resolve({ easyCategory, hardCategory });
+                } else {
+                  // If there are not enough categories, return null or handle appropriately
+                  resolve(null);
+                }
+              }
+            }
+          );
+        } else {
+          db.all(
+            queryFlashcards,
+            [username],
+            (
+              err,
+              rows: {
+                category: string;
+                easy: number;
+                hard: number;
+              }[]
+            ) => {
+              if (err) {
+                reject(err);
+              } else {
+                if (rows.length === 2) {
+                  const easyCategory = rows[0].category;
+                  const hardCategory = rows[1].category;
+                  resolve({ easyCategory, hardCategory });
+                } else {
+                  // If there are not enough categories, return null or handle appropriately
+                  resolve(null);
+                }
+              }
+            }
+          );
+        }
+      });
     }
   );
 };
+
+
+
+
+
 
 export const createMarathonRecord = async (
   marathonId: string,
