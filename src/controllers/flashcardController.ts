@@ -92,21 +92,23 @@ export default {
           difficulty_level: difficulty_level,
           is_auto: is_auto,
         } = req.body;
+
+        const categoryC = category.charAt(0).toUpperCase() + category.slice(1);
         const newFlashcard: Flashcard = {
           id: id,
           username: username,
           question: question,
           answer: answer,
-          category: category,
+          category: categoryC,
           difficulty_level: difficulty_level,
           is_auto: is_auto,
         };
         const category_exist: boolean = await checkCategoryExists(
           username,
-          category
+          categoryC
         );
         if (!category_exist) {
-          await addCategory(username, category);
+          await addCategory(username, categoryC);
         }
         await createFlashcard(newFlashcard);
         res.status(201).json(newFlashcard);
