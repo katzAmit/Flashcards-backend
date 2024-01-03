@@ -242,6 +242,8 @@ export default {
       stats.push(stat5);
       let stat6 = await flashcardService.getStats6(username);
       stats.push(stat6);
+      let stat7 = await flashcardService.getStats7(username);
+      stats.push(stat7);
       res.status(200).json(stats);
     } catch (error) {
       console.error("Error generating stats:", error);

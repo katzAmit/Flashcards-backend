@@ -830,7 +830,17 @@ export const getStats6 = async (
                   resolve({ easyCategory, hardCategory });
                 } else {
                   // If there are not enough categories, return null or handle appropriately
-                  resolve(null);
+                  if(rows.length === 1){
+                    const easyCategory = rows[0].category;
+                    const hardCategory = rows[0].category;
+                  resolve({ easyCategory, hardCategory });
+                  }
+                  else{
+                    const easyCategory = "";
+                    const hardCategory = "";
+                  resolve({ easyCategory, hardCategory });
+                  }
+                  
                 }
               }
             }
@@ -868,6 +878,34 @@ export const getStats6 = async (
 };
 
 
+export const getStats7 = async (
+  username: string | undefined
+): Promise<boolean> => {
+  return new Promise<boolean>((resolve, reject) => {
+    const query = "SELECT COUNT(*) AS count FROM quizzes";
+
+    const getFlashcardCount  = (): Promise<number> => {
+      return new Promise<number>((resolve, reject) => {
+        db.get(query, (err, row: { count?: number }) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(row ? row.count || 0 : 0); // Return the count or 0 if no matching row
+          }
+        });
+      });
+    };
+
+    
+    getFlashcardCount()
+    .then((count) => {
+      resolve(!(count === 0)); // Resolve with false if the count is 0 (table is empty), otherwise true
+    })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+};
 
 
 
