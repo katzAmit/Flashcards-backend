@@ -355,7 +355,10 @@ export default {
     num_questions = num_questions < 3 ? 3 : num_questions;
     const usedMap: number[] = new Array(allFlashcardsInCategory.length).fill(0);
     const numOfFlashcardsPerQuiz = num_questions;
-    if (allFlashcardsInCategory.length < num_questions) {
+    if (
+      allFlashcardsInCategory.length < num_questions ||
+      allFlashcardsInCategory.length < 3
+    ) {
       res.status(400).json({
         error: `${category}' doesn't have enough flashcards for a single quiz`,
       });
