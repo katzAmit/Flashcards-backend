@@ -507,14 +507,42 @@ export const getStats1 = async (
   username: string | undefined
 ): Promise<string> => {
   return new Promise<string>((resolve, reject) => {
-    const queryMorning =
-      "SELECT COUNT(*) AS count FROM quizzes WHERE username = ? AND difficulty_level = 'Easy' AND strftime('%H:%M', end_date) BETWEEN '08:00' AND '15:59'";
-    const queryAfternoon =
-      "SELECT COUNT(*) AS count FROM quizzes WHERE username = ? AND difficulty_level = 'Easy' AND strftime('%H:%M', end_date) BETWEEN '16:00' AND '23:59'";
-    const queryNight =
-      "SELECT COUNT(*) AS count FROM quizzes WHERE username = ? AND difficulty_level = 'Easy' AND (strftime('%H:%M', end_date) BETWEEN '00:00' AND '07:59' OR strftime('%H:%M', end_date) >= '00:00' AND strftime('%H:%M', end_date) <= '08:00')";
-
-    const getQuizCount = (query: string, params: any[]): Promise<number> => {
+    const queryMorning = `
+  SELECT COUNT(*) AS count 
+  FROM quizzes 
+  WHERE 
+    username = ? 
+    AND difficulty_level = 'Easy' 
+    AND start_date IS NOT NULL 
+    AND end_date IS NOT NULL 
+    AND strftime('%H:%M', end_date) BETWEEN '08:00' AND '15:59'
+`;
+    const queryAfternoon = `
+SELECT COUNT(*) AS count 
+FROM quizzes 
+WHERE 
+  username = ? 
+  AND difficulty_level = 'Easy' 
+  AND start_date IS NOT NULL 
+  AND end_date IS NOT NULL 
+  AND strftime('%H:%M', end_date) BETWEEN '16:00' AND '23:59'
+`;
+    const queryNight = `
+  SELECT COUNT(*) AS count 
+  FROM quizzes 
+  WHERE 
+    username = ? 
+    AND difficulty_level = 'Easy' 
+    AND start_date IS NOT NULL 
+    AND end_date IS NOT NULL 
+    AND (
+      strftime('%H:%M', end_date) BETWEEN '00:00' AND '07:59' 
+      OR (
+        strftime('%H:%M', end_date) >= '00:00' 
+        AND strftime('%H:%M', end_date) <= '08:00'
+      )
+    )
+`; const getQuizCount = (query: string, params: any[]): Promise<number> => {
       return new Promise<number>((resolve, reject) => {
         db.get(query, params, (err, row: { count?: number }) => {
           if (err) {
@@ -551,48 +579,6 @@ export const getStats1 = async (
   });
 };
 
-// export const getStats2 = async (
-//   username: string | undefined
-// ): Promise<{ category: string; questions: number }[]> => {
-//   const query = `
-//     SELECT
-//       category,
-//       COUNT(*) AS questions
-//     FROM
-//       flashcards
-//     WHERE
-//       difficulty_level = 'Easy'
-//     GROUP BY
-//       category;
-//   `;
-
-//   // const query = `
-//   //   SELECT
-//   //     category,
-//   //     COUNT(*) AS questionss
-//   //   FROM
-//   //     quizzes
-//   //   WHERE
-//   //     difficulty_level = 'Easy' AND username = ?
-//   //   GROUP BY
-//   //     category
-//   // `;
-
-//   return new Promise<{ category: string; questions: number }[]>(
-//     (resolve, reject) => {
-//       db.all(query, (err, rows: { category: string; questions: number }[]) => {
-//         if (err) {
-//           reject(err);
-//           return;
-//         }
-//         if (rows.length != 0) {
-//           resolve(rows);
-//         } else resolve([]);
-//       });
-//     }
-//   );
-// };
-
 export const getStats2 = async (
   username: string | undefined
 ): Promise<{ category: string; questions: number }[]> => {
@@ -603,7 +589,10 @@ export const getStats2 = async (
     FROM
       quizzes
     WHERE
-      difficulty_level = 'Easy' AND username = ?
+      difficulty_level = 'Easy' 
+      AND username = ? 
+      AND start_date IS NOT NULL
+      AND end_date IS NOT NULL
     GROUP BY
       category
     ORDER BY
@@ -626,7 +615,7 @@ export const getStats2 = async (
     (resolve, reject) => {
       // Check if there are rows in the quizzes table
       db.get<{ count: number }>(
-        "SELECT COUNT(*) as count FROM quizzes WHERE username = ?",
+        "SELECT COUNT(*) as count FROM quizzes WHERE username = ? AND start_date IS NOT NULL AND end_date IS NOT NULL",
         [username],
         (countErr, countRow) => {
           if (countErr) {
@@ -722,19 +711,6 @@ export const getStats3 = async (
   });
 };
 
-const getDifficultyLevelByIndex = (index: number): string => {
-  switch (index) {
-    case 0:
-      return "Easy";
-    case 1:
-      return "Medium";
-    case 2:
-      return "Hard";
-    default:
-      return "Unknown";
-  }
-};
-
 export const getStats4 = async (
   username: string | undefined
 ): Promise<
@@ -779,16 +755,17 @@ export const getStats5 = async (
 ): Promise<string> => {
   return new Promise<string>((resolve, reject) => {
     const query = `
-    SELECT
-  COUNT(DISTINCT quiz_id) AS numberOfQuizzes,
-  CASE
-    WHEN COUNT(DISTINCT quiz_id) > 0 THEN
-      ROUND(SUM((CAST(strftime('%s', end_date) AS REAL) - CAST(strftime('%s', start_date) AS REAL)) / 60) / COUNT(DISTINCT quiz_id))
-    ELSE
-      0
-  END AS averageTimePerQuiz
-FROM quizzes;
-  `;
+  SELECT
+    COUNT(DISTINCT quiz_id) AS numberOfQuizzes,
+    CASE
+      WHEN COUNT(DISTINCT quiz_id) > 0 THEN
+        ROUND(SUM((CAST(strftime('%s', end_date) AS REAL) - CAST(strftime('%s', start_date) AS REAL)) / 60) / COUNT(DISTINCT quiz_id))
+      ELSE
+        0
+    END AS averageTimePerQuiz
+  FROM quizzes
+  WHERE start_date IS NOT NULL AND end_date IS NOT NULL;
+`;
 
     db.get(
       query,
@@ -933,7 +910,14 @@ export const getStats7 = async (
   username: string | undefined
 ): Promise<boolean> => {
   return new Promise<boolean>((resolve, reject) => {
-    const queryQuizzes = "SELECT COUNT(*) AS count FROM quizzes WHERE username = ?";
+    const queryQuizzes = `
+  SELECT COUNT(*) AS count 
+  FROM quizzes 
+  WHERE 
+    username = ? 
+    AND start_date IS NOT NULL 
+    AND end_date IS NOT NULL;
+`;
     const queryFlashcards = "SELECT COUNT(*) AS count FROM flashcards WHERE username = ?";
 
     const getRowCount = (query: string, params: any[]): Promise<number> => {
@@ -962,6 +946,19 @@ export const getStats7 = async (
         reject(error);
       });
   });
+};
+
+const getDifficultyLevelByIndex = (index: number): string => {
+  switch (index) {
+    case 0:
+      return "Easy";
+    case 1:
+      return "Medium";
+    case 2:
+      return "Hard";
+    default:
+      return "Unknown";
+  }
 };
 
 export const createMarathonRecord = async (

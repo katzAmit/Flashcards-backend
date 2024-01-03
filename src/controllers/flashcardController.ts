@@ -125,6 +125,11 @@ export default {
         const updatedFields: Partial<Flashcard> = req.body;
         const is_auto = updatedFields?.is_auto;
         const category = updatedFields?.category;
+        const previous_category = await getCategoryByFlashcardId(cardId);
+        const rowCount = await getCategoryRowCount(username, previous_category);
+        if (rowCount == 1) {
+          await deleteCategory(username, previous_category);
+        }
         if (category) {
           const category_exist: boolean = await checkCategoryExists(
             username,
