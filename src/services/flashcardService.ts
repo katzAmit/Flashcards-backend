@@ -60,19 +60,6 @@ export const updateFlashcardbyId = async (
     );
   });
 };
-// export const deleteFlashcardById = async (id: string): Promise<void> => {
-//   return new Promise<void>((resolve, reject) => {
-//     db.run("DELETE FROM flashcards WHERE id = ?", [id], function (err) {
-//       if (err) {
-//         console.error(err);
-//         reject(err);
-//       } else {
-//         console.log(`Flashcard deleted with ID: ${id}`);
-//         resolve();
-//       }
-//     });
-//   });
-// };
 
 export const deleteFlashcardById = async (id: string): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
@@ -142,10 +129,10 @@ export const createQuizRecord = async (
     db.run(query, values, (err) => {
       if (err) {
         reject(err);
-        console.log("THere was an ERRROR!!!", err);
+
       } else {
         resolve();
-        console.log("Success");
+
       }
     });
   });

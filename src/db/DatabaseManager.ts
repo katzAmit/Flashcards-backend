@@ -13,7 +13,7 @@ class DatabaseSingleton {
           if (err) {
             console.error(err.message);
           } else {
-            console.log("Connected to the SQLite database.");
+
             DatabaseSingleton.initializeTables(); // Call table initialization
           }
         }
@@ -45,8 +45,6 @@ class DatabaseSingleton {
       (initErr) => {
         if (initErr) {
           console.error("Error initializing quizzes table:", initErr.message);
-        } else {
-          console.log("Quizzes table initialized.");
         }
       }
     );
@@ -74,8 +72,6 @@ class DatabaseSingleton {
             "Error initializing flashcards table:",
             initErr.message
           );
-        } else {
-          console.log("flashcards tables initialized.");
         }
       }
     );
@@ -97,8 +93,6 @@ class DatabaseSingleton {
       (initErr: any) => {
         if (initErr) {
           console.error("Error initializing marathons table:", initErr.message);
-        } else {
-          console.log("marathons table initialized.");
         }
       }
     );
@@ -115,9 +109,7 @@ class DatabaseSingleton {
       [username, password, fname, lname],
       (err) => {
         if (err) {
-          console.error("Error inserting user:", err.message);
-        } else {
-          console.log("User inserted successfully.");
+          // console.error("Error inserting user:", err.message);
         }
       }
     );
@@ -138,9 +130,7 @@ class DatabaseSingleton {
         [category, "dyu@post.bgu.ac.il"],
         (err) => {
           if (err) {
-            console.error("Error inserting category:", err.message);
-          } else {
-            console.log("Category inserted successfully:", category);
+
           }
         }
       );
@@ -379,9 +369,6 @@ class DatabaseSingleton {
         ], // Set default difficulty
         (err) => {
           if (err) {
-            console.error("Error inserting flashcard:", err.message);
-          } else {
-            console.log("Flashcard inserted successfully.");
           }
         }
       );
