@@ -1,4 +1,4 @@
-// flashcardInterfaces.ts
+
 export enum difficulty_level {
   Easy = "Easy",
   Medium = "Medium",
@@ -11,13 +11,13 @@ export type Flashcard = {
   question: string;
   answer: string;
   category: string;
-  difficulty_level: difficulty_level; // Using the ENUM here
+  difficulty_level: difficulty_level;
   is_auto: number | undefined;
 };
 
 export type User = {
   username: string;
-  password: string; // Encrypted at rest
+  password: string;
   fname: string;
   lname: string;
 };
@@ -35,7 +35,6 @@ export type Quiz = {
 
 export type FilterCriteria = {
   [key: string]: string[] | undefined;
-  // Add other criteria properties as needed
 };
 
 export type Marathon = {

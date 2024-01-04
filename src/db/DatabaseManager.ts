@@ -3,7 +3,7 @@ import sqlite3 from "sqlite3";
 class DatabaseSingleton {
   private static instance: sqlite3.Database | null = null;
 
-  private constructor() { } // Prevents external instantiation
+  private constructor() { }
 
   static getInstance(): sqlite3.Database {
     if (!DatabaseSingleton.instance) {
@@ -14,12 +14,10 @@ class DatabaseSingleton {
             console.error(err.message);
           } else {
 
-            DatabaseSingleton.initializeTables(); // Call table initialization
+            DatabaseSingleton.initializeTables();
           }
         }
       );
-    } else {
-      // If the instance already exists, perform operations here if needed
     }
     return DatabaseSingleton.instance as sqlite3.Database;
   }
@@ -108,9 +106,6 @@ class DatabaseSingleton {
       `INSERT INTO users (username, password, fname, lname) VALUES (?, ?, ?, ?)`,
       [username, password, fname, lname],
       (err) => {
-        if (err) {
-          // console.error("Error inserting user:", err.message);
-        }
       }
     );
   }
@@ -366,7 +361,7 @@ class DatabaseSingleton {
           flashcards.category,
           randomDifficulty,
           flashcards.isAuto,
-        ], // Set default difficulty
+        ],
         (err) => {
           if (err) {
           }

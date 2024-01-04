@@ -63,32 +63,27 @@ export const updateFlashcardbyId = async (
 
 export const deleteFlashcardById = async (id: string): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
-    // Use a transaction to ensure atomicity
     db.serialize(() => {
       db.run("BEGIN TRANSACTION");
 
-      // Delete from the flashcards table
       db.run("DELETE FROM flashcards WHERE id = ?", [id], function (err) {
         if (err) {
           console.error(err);
-          db.run("ROLLBACK"); // Rollback the transaction in case of an error
+          db.run("ROLLBACK");
           reject(err);
         } else {
           console.log(`Flashcard deleted with ID: ${id}`);
 
-          // Delete from the quizzes table
           db.run(
             "DELETE FROM quizzes WHERE flashcard_id = ?",
             [id],
             function (err) {
               if (err) {
                 console.error(err);
-                db.run("ROLLBACK"); // Rollback the transaction in case of an error
+                db.run("ROLLBACK");
                 reject(err);
               } else {
                 console.log(`Quizzes records deleted for flashcard ID: ${id}`);
-
-                // Commit the transaction
                 db.run("COMMIT");
                 resolve();
               }
@@ -106,8 +101,8 @@ export const createQuizRecord = async (
   username: string,
   difficulty_level: string,
   category: string,
-  start_time?: Date, // Making start_time optional
-  end_time?: Date // Making end_time optional
+  start_time?: Date,
+  end_time?: Date
 ) => {
   return new Promise<void>((resolve, reject) => {
     const values: any[] = [
@@ -120,7 +115,7 @@ export const createQuizRecord = async (
 
     let query = `INSERT INTO quizzes (quiz_id, flashcard_id, difficulty_level, username, category) VALUES (?, ?, ?, ?, ?)`;
 
-    // Check for start_time and end_time presence
+
     if (start_time && end_time) {
       query = `INSERT INTO quizzes (quiz_id, flashcard_id, difficulty_level, username, category, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?)`;
       values.push(start_time, end_time);
@@ -482,14 +477,6 @@ export const updateMarathonbyId = async (
   });
 };
 
-// export const updateMarathon = async (marathon: MarathonRow) => {
-//   const updatedFields: Partial<Marathon> = {
-//     marathon_id: marathon.marathon_id,
-//     did_quiz: marathon.did_quiz,
-//   };
-//   await updateMarathonbyId(marathon.marathon_id, updatedFields);
-// };
-
 export const getStats1 = async (
   username: string | undefined
 ): Promise<string> => {
@@ -547,11 +534,9 @@ WHERE
       getQuizCount(queryNight, [username]),
     ])
       .then((counts) => {
-        // Determine the period with the highest count
         const maxCount = Math.max(...counts);
         const maxIndex = counts.indexOf(maxCount);
 
-        // Resolve with the corresponding period
         if (maxIndex === 0) {
           resolve("08:00-16:00");
         } else if (maxIndex === 1) {
@@ -600,7 +585,7 @@ export const getStats2 = async (
 
   return new Promise<{ category: string; questions: number }[]>(
     (resolve, reject) => {
-      // Check if there are rows in the quizzes table
+
       db.get<{ count: number }>(
         "SELECT COUNT(*) as count FROM quizzes WHERE username = ? AND start_date IS NOT NULL AND end_date IS NOT NULL",
         [username],
@@ -679,7 +664,7 @@ export const getStats3 = async (
         if (err) {
           reject(err);
         } else {
-          // Ensure the array length is exactly 3
+
           const result = Array.from({ length: 3 }, (_, index) => {
             const difficultyLevel = getDifficultyLevelByIndex(index);
             const row = rows.find(
@@ -1139,8 +1124,7 @@ export const getMarathonById = async (
 
           resolve(marathon);
         } else {
-          // If no matching marathon is found, return null
-          resolve(null);
+          resolve(null); // If no matching marathon is found, return null
         }
       }
     });

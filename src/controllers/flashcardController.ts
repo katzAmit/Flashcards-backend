@@ -26,7 +26,7 @@ import {
   updateMarathonbyId,
 } from "../services/flashcardService";
 export default {
-  // flashcards
+
   getFlashcards: async (req: RequestWithUserPayload, res: Response) => {
     try {
       const category = req.query.category as string | undefined;
@@ -184,21 +184,17 @@ export default {
         );
 
         if (marathon_or_practice === "marathon") {
-          // Retrieve the existing marathon
           const existingMarathon = await getMarathonById(marathon_id, quiz_id);
 
           if (existingMarathon) {
-            // Update the did_quiz field for the existing marathon
             await updateMarathonbyId(
               existingMarathon.marathon_id,
               existingMarathon.quiz_id,
               {
                 did_quiz: 1,
-                // Add other fields as needed for your updateMarathon function
               }
             );
           } else {
-            // Handle the case where the marathon does not exist
             console.error("Marathon not found for update.");
           }
         }
@@ -256,7 +252,6 @@ export default {
     }
   },
 
-  // quizzes
   getQuizzes: async (req: RequestWithUserPayload, res: Response) => {
     let { categories, selectedNumberOfQuestionsPerQuiz } = req.body;
     const username = req.user?.username;
@@ -365,14 +360,14 @@ export default {
       return;
     }
     try {
-      const startDate = new Date(); // Current date as start date for the marathon
+      const startDate = new Date();
       const curMarathonUUID = uuidv4();
       for (let i = 0; i < total_days; i++) {
         for (let k = 0; k < num_quiz; k++) {
-          const curQuizUUID = uuidv4(); // Generate UUID for the quiz
+          const curQuizUUID = uuidv4();
 
           const curQuiz: any = {
-            physical_id: curQuizUUID, // UUID for the quiz
+            physical_id: curQuizUUID,
             title: `Quiz - Day ${i + 1}`,
             categories: [category],
             flashcards: [],
@@ -400,7 +395,6 @@ export default {
             }
             const selectedFlashcard = allFlashcardsInCategory[randomIndex];
 
-            // Create quiz record for each flashcard in the quiz
             await createQuizRecord(
               curQuiz.physical_id,
               selectedFlashcard.id,
@@ -417,9 +411,9 @@ export default {
             curQuizUUID,
             username,
             category,
-            i, // Current day starting from 0
+            i,
             total_days,
-            startDate, // Start date for the marathon
+            startDate,
             0
           );
         }
@@ -450,7 +444,6 @@ export default {
     }
   },
 
-  // login
   loginPage: async (req: Request, res: Response) => {
     const { username, password } = req.body;
 
@@ -464,7 +457,7 @@ export default {
         username: username,
         fname: isValidUser.fname,
       };
-      const token = jwt.sign(tokenPayload, "secret_key"); // Replace 'secret_key' with your actual secret key
+      const token = jwt.sign(tokenPayload, "secret_key");
       res.status(200).json({ token });
     } else {
       res.status(403).json({ error: "Invalid credentials" });
@@ -496,9 +489,9 @@ export default {
     res: Response
   ) => {
     try {
-      const { marathon_id } = req.body; // Extract marathon ID from the request body
+      const { marathon_id } = req.body;
       const quiz = await getCurrentMarathonQuiz(marathon_id);
-      res.status(200).json(quiz); // Send the retrieved quiz as the response
+      res.status(200).json(quiz);
     } catch (error) {
       console.error("Error fetching current marathon quiz:", error);
       res.status(500).json({ error: "Internal server error" });
