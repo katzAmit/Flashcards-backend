@@ -132,6 +132,38 @@ export const createQuizRecord = async (
     });
   });
 };
+export const updateQuizRecord = async (
+  quizId: string,
+  flashcardId: string,
+  username: string,
+  difficulty_level: string,
+  category: string,
+  start_time: Date,
+  end_time: Date
+) => {
+  return new Promise<void>((resolve, reject) => {
+    const values: any[] = [
+      difficulty_level,
+      username,
+      category,
+      start_time, // Add start_time directly to values array
+      end_time,   // Add end_time directly to values array
+      quizId,
+      flashcardId
+    ];
+
+    let query = `UPDATE quizzes SET difficulty_level = ?, username = ?, category = ?, start_date = ?, end_date = ? WHERE quiz_id = ? AND flashcard_id = ?`;
+
+    db.run(query, values, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+};
+
 
 export const getFlashcards = async (
   username: string | undefined,

@@ -24,7 +24,9 @@ import {
   getCurrentMarathonQuiz,
   getMarathonById,
   updateMarathonbyId,
+  updateQuizRecord,
 } from "../services/flashcardService";
+import { start } from "repl";
 export default {
 
   getFlashcards: async (req: RequestWithUserPayload, res: Response) => {
@@ -157,7 +159,7 @@ export default {
       if (req.user) {
         const id = uuidv4();
         const username = req.user.username;
-        const {
+        let {
           flashcards,
           quiz_id,
           start_time,
@@ -166,23 +168,9 @@ export default {
           marathon_id,
         } = req.body;
 
-        const updateFlashcardsPromise = updateFlashCards(flashcards);
+        const updateFlashcardsPromise = await updateFlashCards(flashcards);
 
-        const createQuizzesPromise = Promise.all(
-          flashcards.map(async (flashcard: Flashcard) => {
-            const { id: flashcardId, difficulty_level, category } = flashcard;
-            await createQuizRecord(
-              id,
-              flashcardId,
-              username,
-              difficulty_level,
-              category,
-              start_time,
-              end_time
-            );
-          })
-        );
-
+        let updateQuizzesPromise;
         if (marathon_or_practice === "marathon") {
           const existingMarathon = await getMarathonById(marathon_id, quiz_id);
 
@@ -194,13 +182,40 @@ export default {
                 did_quiz: 1,
               }
             );
+
+            updateQuizzesPromise = Promise.all(
+              flashcards.map(async (flashcard: Flashcard) => {
+                const { id: flashcardId, difficulty_level, category } = flashcard;
+                return updateQuizRecord(
+                  quiz_id,
+                  flashcardId,
+                  username,
+                  difficulty_level,
+                  category,
+                  start_time,
+                  end_time
+                );
+              })
+            );
           } else {
             console.error("Marathon not found for update.");
           }
+        } else {
+          updateQuizzesPromise = Promise.all(
+            flashcards.map(async (flashcard: Flashcard) => {
+              const { id: flashcardId, difficulty_level, category } = flashcard;
+              return createQuizRecord(
+                id,
+                flashcardId,
+                username,
+                difficulty_level,
+                category,
+                start_time,
+                end_time
+              );
+            })
+          );
         }
-
-        await Promise.all([updateFlashcardsPromise, createQuizzesPromise]);
-
         res.status(200).json({ message: "Quiz submitted successfully" });
       } else {
         res.status(401).json({ error: "Unauthorized" });
@@ -261,6 +276,11 @@ export default {
       selectedNumberOfQuestionsPerQuiz == "undefined"
     ) {
       selectedNumberOfQuestionsPerQuiz = 3;
+    } else if (selectedNumberOfQuestionsPerQuiz < 3) {
+      res.status(400).json({
+        error: `Cannot generate a quiz with under 3 flashcards`,
+      });
+      return;
     }
     try {
       const quizzes = [];
