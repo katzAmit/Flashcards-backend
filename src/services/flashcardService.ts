@@ -821,7 +821,7 @@ export const getStats6 = async (
       SUM(CASE WHEN difficulty_level = 'Easy' THEN 1 ELSE 0 END) AS easy,
       SUM(CASE WHEN difficulty_level = 'Hard' THEN 1 ELSE 0 END) AS hard
     FROM
-      flashcards
+      quizzes
     WHERE
       username = ?
     GROUP BY
